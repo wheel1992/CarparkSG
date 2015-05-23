@@ -1,0 +1,204 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/fragment_detail_background_color"
+    android:clickable="true"
+    android:fillViewport="true">
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        tools:context="carpark.sg.com.carparksg.controller.FragmentCarparkDetail"
+        android:background="@color/fragment_detail_background_color"
+        android:padding="8dp"
+        android:clickable="true"
+        >
+
+        <android.support.v7.widget.CardView
+            xmlns:card_view="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/card_view_top"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            card_view:cardCornerRadius="2dp"
+            card_view:cardUseCompatPadding="true"
+            card_view:cardElevation="4dp"
+            card_view:contentPaddingTop="16dp"
+            card_view:contentPaddingLeft="8dp"
+            card_view:contentPaddingRight="8dp"
+            card_view:contentPaddingBottom="8dp"
+            style="@style/CardViewStyle">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" > <!-- root -->
+
+                <TableLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:stretchColumns="0"
+                    android:shrinkColumns="0"> <!-- top row consist of image, and 2 textview-->
+                    <!--
+                    <com.google.android.gms.maps.StreetViewPanoramaView
+                        android:id="@+id/street_view_panorama"
+                        android:layout_width="match_parent"
+                        android:layout_height="150dp" />
+                       -->
+                    <TableRow
+                        android:id="@+id/tableRow1"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" >
+
+                        <LinearLayout
+                            android:id="@+id/text_layout"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            style="@style/CardViewHeaderAreaStyle">
+
+                            <TextView
+                                android:id="@+id/text_title"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Title here"
+                                style="@style/CardViewTextTitleStyle" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/text_caption_address"
+                                style="@style/CardViewTextCaptionStyle" />
+
+                            <TextView
+                                android:id="@+id/text_subtitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Subtitle here"
+                                style="@style/CardViewTextSubTitleStyle" />
+
+                        </LinearLayout>
+
+                        <ImageView
+                            android:id="@+id/image_street_view"
+                            android:layout_width="150dp"
+                            android:layout_height="150dp"
+                            android:background="@color/black"
+                            style="@style/CardViewImageStyle" />
+
+                    </TableRow>
+                </TableLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/CardViewActionAreaStyle"> <!-- action button-->
+
+                    <Button
+                        android:id="@+id/btnNavigateTo"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/button_text_navigate_to"
+                        style="@style/AppCompat.Button.Flat"/>
+
+                    <Button
+                        android:id="@+id/btnFavourite"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/button_text_favourite"
+                        style="@style/AppCompat.Button.Flat"/>
+
+
+                </LinearLayout>
+
+
+            </LinearLayout>
+        </android.support.v7.widget.CardView>
+
+
+        <!-- Carpark Available Lot -->
+        <android.support.v7.widget.CardView
+            xmlns:card_view="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/card_view_lot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            card_view:cardCornerRadius="2dp"
+            card_view:cardUseCompatPadding="true"
+            card_view:cardElevation="4dp"
+            card_view:contentPaddingTop="16dp"
+            card_view:contentPaddingLeft="8dp"
+            card_view:contentPaddingRight="8dp"
+            card_view:contentPaddingBottom="8dp"
+            style="@style/CardViewStyle">
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" > <!-- root -->
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    style="@style/CardViewHeaderAreaStyle" >
+
+                    <TextView
+                        android:id="@+id/text_available_lot"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Number of lot left"
+                        android:textColor="@color/white"
+                        style="@style/CardViewTextBigTitleStyle"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/CardViewActionAreaStyle"> <!-- action button-->
+
+                    <Button
+                        android:id="@+id/btnRefresh"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/button_text_refresh"
+                        style="@style/AppCompat.Button.Flat.light"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </android.support.v7.widget.CardView>
+
+
+        <!-- Carpark Detail -->
+        <android.support.v7.widget.CardView
+            xmlns:card_view="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/card_view_detail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            card_view:cardCornerRadius="2dp"
+            card_view:cardUseCompatPadding="true"
+            card_view:cardElevation="4dp"
+            card_view:contentPaddingTop="16dp"
+            card_view:contentPaddingLeft="8dp"
+            card_view:contentPaddingRight="8dp"
+            card_view:contentPaddingBottom="8dp"
+            style="@style/CardViewStyle">
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/recycler_view_detail"
+                android:layout_width="match_parent"
+                android:layout_height="280dp" />
+
+        </android.support.v7.widget.CardView>
+
+
+
+
+
+
+    </LinearLayout>
+</ScrollView>

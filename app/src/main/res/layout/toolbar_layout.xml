@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.Toolbar
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tb="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/custom_toolbar"
+    android:layout_height="?attr/actionBarSize"
+    android:layout_width="match_parent"
+    android:minHeight="?attr/actionBarSize"
+    android:background="?attr/colorPrimary"
+    tb:contentInsetLeft="72dp"
+    tb:contentInsetStart="72dp"
+    tb:theme="@style/ToolbarTheme"
+    tb:popupTheme="@style/ThemeOverlay.AppCompat.Light">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_vertical"
+        android:orientation="horizontal" >
+
+        <ImageView
+            android:id="@+id/toolbar_logo_img"
+            android:src="@drawable/banner_carpark"
+            android:layout_width="wrap_content"
+            android:layout_height="35dip"
+            android:layout_gravity="left|center_vertical"/>
+
+
+        <LinearLayout
+            android:id="@+id/search_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="horizontal" >
+
+            <!--
+            <EditText
+                android:id="@+id/search_view"
+                android:layout_width="0dp"
+                android:layout_height="?attr/actionBarSize"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:gravity="center_vertical"
+                android:hint="Search"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:maxLines="1"
+                android:paddingLeft="2dp"
+                android:singleLine="true"
+                android:textColor="#ffffff"
+                android:textColorHint="#b3ffffff" />
+              -->
+            
+            <AutoCompleteTextView
+                android:id="@+id/search_auto_complete_text"
+                android:layout_width="0dp"
+                android:layout_height="?attr/actionBarSize"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:gravity="center_vertical"
+                android:hint="@string/search_hint"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:paddingLeft="2dp"
+                android:singleLine="true"
+                android:textColor="#ffffff"
+                android:textColorHint="#b3ffffff"
+                android:textCursorDrawable="@drawable/cursor"
+                android:popupBackground="@color/white"/>
+            
+            <ImageView
+                android:id="@+id/search_clear"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:src="@drawable/ic_close_white" />
+
+        </LinearLayout>
+    </LinearLayout>
+</android.support.v7.widget.Toolbar>

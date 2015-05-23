@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="56dp"
+    android:stretchColumns="1"
+    android:shrinkColumns="1"
+    android:background="@color/white">
+
+    <TableRow
+        android:id="@+id/tableRow1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <ImageView
+            android:id="@+id/image_recent_icon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:gravity="center_vertical"
+            android:scaleType="fitStart"
+            android:layout_marginTop="8dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/text_recent_value"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Primary Text"
+            android:textSize="@dimen/text_primary"
+            android:textColor="@color/primary_text"
+            android:layout_marginTop="20dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"/>
+
+        <ImageView
+            android:id="@+id/image_recent_delete"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:gravity="center_vertical"
+            android:scaleType="fitStart"
+            android:layout_marginTop="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginBottom="8dp" />
+
+    </TableRow>
+
+</TableLayout>

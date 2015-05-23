@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="@dimen/recyclerview_list_row_height"
+    android:paddingLeft="@dimen/recyclerview_list_row_text_padding_left"
+    android:paddingRight="@dimen/recyclerview_list_row_text_padding_right"
+    android:paddingTop="@dimen/recyclerview_list_row_text_padding_top"
+    android:paddingBottom="@dimen/recyclerview_list_row_text_padding_bottom">
+
+    <TextView
+        android:id="@+id/first_line"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:gravity="center_vertical"
+        android:text="Primary Text"
+        android:textSize="@dimen/text_primary"
+        android:textColor="@color/primary_text"/>
+
+    <TextView
+        android:id="@+id/second_line"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/first_line"
+        android:ellipsize="end"
+        android:singleLine="true"
+        android:text="Secondary text"
+        android:textSize="@dimen/text_secondary"
+        android:textColor="@color/secondary_text"/>
+
+
+
+</RelativeLayout>
