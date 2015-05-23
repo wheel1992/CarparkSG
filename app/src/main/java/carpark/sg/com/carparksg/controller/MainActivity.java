@@ -1,10 +1,17 @@
 package carpark.sg.com.carparksg.controller;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentSender;
 import android.graphics.Rect;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.content.Context;
@@ -32,6 +39,13 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.model.LatLng;
+
 import org.json.JSONException;
 
 import java.io.FileNotFoundException;
@@ -41,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import carpark.sg.com.carparksg.R;
+import carpark.sg.com.carparksg.logic.Parser;
 import carpark.sg.com.model.CarparkList;
 import carpark.sg.com.model.Constant;
 import carpark.sg.com.model.Favourite;
@@ -54,7 +69,10 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         FragmentFavourite.OnFragmentInteractionListener,
         FragmentRecent.OnFragmentInteractionListener,
         FragmentSearch.OnFragmentInteractionListener,
-        FragmentCarparkDetail.OnFragmentInteractionListener{
+        FragmentCarparkDetail.OnFragmentInteractionListener,
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
+        LocationListener{
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -64,6 +82,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
     private LinearLayout searchContainer;
     private AutoCompleteTextView toolbarSearchText;
     private ImageView toolbarSearchClear;
+    private AlertDialog.Builder mAlertDialog;
 
     private HistoryList mHistoryList;
     private FavouriteList mFavouriteList;
@@ -75,12 +94,20 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
     private InputMethodManager imm;
 
     private final String TAG_GEOCODE_IO_EXCEPTION = "Geocoder IO Exception";
+    private final int ALERT_DIALOG_TYPE_GPS = 1;
+    private final int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 
     private FragmentManager fragmentManager;
     private FragmentTransaction fragmentTransaction;
     private FragmentSearch fragmentSearch;
+    private FragmentRecent fragmentRecent;
+    private FragmentFavourite fragmentFavourite;
     private FragmentCarparkDetail fragmentCarparkDetail;
 
+    //Location
+    private GoogleApiClient mGoogleApiClient;
+    private LocationRequest mLocationRequest;
+    private LatLng currentLocation;
 
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
@@ -90,7 +117,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        System.out.println("MainActivity - onCreate");
         // Set up fragment manager
         this.initFragmentManager();
 
@@ -100,21 +127,21 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         // Set up Toolbar
         Toolbar mToolBar = (Toolbar) findViewById(R.id.custom_toolbar);
         setSupportActionBar(mToolBar);
-        adjustToolbarLogo();
-        displayToolbarLogo(true);
-        restoreActionBar();
+        this.adjustToolbarLogo();
+        this.displayToolbarLogo(true);
+        this.restoreActionBar();
 
         // Custom preference
-        initPreferences();
+        this.initPreferences();
         // History list
-        initHistoryList();
-        populateHistoryList();
+        this.initHistoryList();
+        this.populateHistoryList();
         // Favourite list
-        initFavouriteList();
-        populateFavouriteList();
+        this.initFavouriteList();
+        this.populateFavouriteList();
 
         // Keyboard
-        initKeyboard();
+        this.initKeyboard();
 
         mNavigationDrawerFragment = (NavigationDrawerFragment)
                 getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
@@ -126,11 +153,62 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
                 R.id.navigation_drawer,
                 mDrawerLayout);
 
-        searchContainer = (LinearLayout) findViewById(R.id.search_container);
-        toolbarSearchText = (AutoCompleteTextView) findViewById(R.id.search_auto_complete_text);
-        toolbarSearchClear = (ImageView) findViewById(R.id.search_clear);
-        initSearchContainer();
+        // Toolbar search container
+        this.initSearchContainer();
 
+        // Google API Client and Location
+        this.initGoogleApiClient();
+        this.initLocationRequest();
+
+    }
+
+    @Override
+    public void onStart(){
+        super.onStart();
+        if(!isLocationServiceOn()){
+            System.out.println("MainActivity - Location is not on");
+            initAlertDialog();
+            showAlertDialog(this.ALERT_DIALOG_TYPE_GPS);
+            this.currentLocation = new LatLng(Parser.convertStringToDouble(Constant.LOCATION_LATITUDE_EXAMPLE),
+                    Parser.convertStringToDouble(Constant.LOCATION_LONGITUDE_EXAMPLE));
+        }
+        this.mGoogleApiClient.connect();
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        System.out.println("MainActivity - onResume");
+
+        // this step will call fragment search to display the google map with current location
+        this.initFragmentSearch(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE, "",
+                        Parser.convertDoubleToString(currentLocation.latitude),
+                        Parser.convertDoubleToString(currentLocation.longitude));
+        this.displayFragmentSearch();
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        System.out.println("MainActivity - onPause");
+        this.clearHistoryList();
+    }
+
+    @Override
+    public void onStop(){
+        super.onStop();
+        System.out.println("MainActivity - onStop");
+        if(this.mGoogleApiClient.isConnected()){
+            System.out.println("MainActivity - Google api client disconnecting");
+            LocationServices.FusedLocationApi.removeLocationUpdates(this.mGoogleApiClient, this);
+            this.mGoogleApiClient.disconnect();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        System.out.println("MainActivity - onDestory");
+        super.onDestroy();
     }
 
     @Override
@@ -157,8 +235,36 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
 
     }
 
+    public void initGoogleApiClient(){
+        this.mGoogleApiClient = new GoogleApiClient.Builder(this)
+                                .addConnectionCallbacks(this)
+                                .addOnConnectionFailedListener(this)
+                                .addApi(LocationServices.API)
+                                .build();
+    }
+
+    public void initLocationRequest(){
+        this.mLocationRequest = LocationRequest.create()
+                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                .setInterval(10 * 1000)
+                .setFastestInterval(1 * 1000);
+    }
+
+
     public void initFragmentManager(){
         this.fragmentManager = getSupportFragmentManager();
+    }
+
+    /**
+     * This method will open the fragment search with map
+     * **/
+    public void initFragmentSearch(int type, String address, String lat, String lng){
+        this.fragmentSearch = FragmentSearch.newInstance(type, address, lat, lng);
+    }
+
+    public void displayFragmentSearch(){
+        String fragName = Constant.FRAGMENT_SEARCH_NAME;
+        displayFragment(this.fragmentSearch, fragName);
     }
 
     public void displayFragment(Fragment newFrag, String name){
@@ -280,8 +386,8 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
 
     @Override
     public void onBackPressed() {
-        Log.d(this.getClass().getName(), "onBackPressed - back button pressed");
-
+        //Log.d(this.getClass().getName(), "onBackPressed - back button pressed");
+        System.out.println("MainActivity - back button pressed");
         //closeKeyboard(toolbarSearchText);
         if(fragmentManager != null){
             //by default, the last fragment to be shown is favourite.
@@ -302,24 +408,14 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
                 //     super.onBackPressed();
             }
         }else{
-            System.out.println("super.onBackPressed");
+            System.out.println("MainActivity - fragmentManager is null, back pressed");
             super.onBackPressed();
         }
 
 
     }
 
-    @Override
-    public void onPause(){
-        super.onPause();
-        this.clearHistoryList();
-    }
 
-    @Override
-    public void onDestroy()
-    {
-        super.onDestroy();
-    }
 
     public void initPreferences(){
         if(this.mPreferences == null){
@@ -361,7 +457,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         // get history list from json string
         try{
             String historyJson = this.mPreferences.getHistory();
-            System.out.println("JSON string from Preferences - " + historyJson);
+            System.out.println("MainActivity - JSON string from Preferences - " + historyJson);
             this.mHistoryList.parseStringToList(historyJson);
 
         }catch(JSONException e){
@@ -380,7 +476,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
     public void populateFavouriteList(){
         try{
             String favouriteValue = mPreferences.getFavourite();
-            System.out.println("JSON string from Favourite - " + favouriteValue);
+            System.out.println("MainActivity - JSON string from Favourite - " + favouriteValue);
             this.mFavouriteList.parseStringToMap(favouriteValue);
         }catch(Exception e){
             //print error
@@ -455,8 +551,10 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         this.populateHistoryList();
     }
 
-
     private void initSearchContainer(){
+        searchContainer = (LinearLayout) findViewById(R.id.search_container);
+        toolbarSearchText = (AutoCompleteTextView) findViewById(R.id.search_auto_complete_text);
+        toolbarSearchClear = (ImageView) findViewById(R.id.search_clear);
 
         this.initSearchAdapter();
         this.toolbarSearchText.setAdapter(mSearchAdapter);
@@ -487,7 +585,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
                 //System.out.println(v.getText());
                 closeKeyboard(toolbarSearchText);
                 initSearchAdapter();
-                searchCarpark(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_ADDRESS, v.getText().toString(), "", "");
+                //searchCarpark(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_ADDRESS, v.getText().toString(), "", "");
                 return true;
             }
         });
@@ -505,7 +603,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
                 String lng = element.getLongitude();
 
                 setToolbarSearchText(address);
-                searchCarpark(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE, address, lat, lng);
+                //searchCarpark(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE, address, lat, lng);
 
             }
         });
@@ -552,6 +650,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         this.toolbarSearchText.setAdapter(this.mSearchAdapter);
     }
 
+    /*
     public void searchCarpark(int type, String address, String lat, String lng){
         if(fragmentSearch != null) {
             this.removeFragment(fragmentSearch);
@@ -560,6 +659,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         fragmentSearch = FragmentSearch.newInstance(type, address, lat, lng);
         displayFragment(fragmentSearch, Constant.FRAGMENT_SEARCH_NAME);
     }
+    */
 
     private void displaySearchContainer(boolean visible){
         if(visible){
@@ -645,10 +745,6 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
 
 
 
-    private String getToolbarSearchText(){
-        return this.toolbarSearchText.getText().toString();
-    }
-
     private void setToolbarSearchText(String value){
         this.toolbarSearchText.setText(value);
     }
@@ -677,65 +773,112 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
 
     }
 
+    /**
+     * For Google API Client - Location stuffs
+     * **/
 
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        //Log.i(this.getClass().getSimpleName(), "Location services connected.");
+        System.out.println("MainActivity - Location service connected");
+        Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if(this.isLocationServiceOn()){ // check if location service is on
+            if(location == null){
+                LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+            }else{
+                handleLocation(location);
+            }
+        }
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        if(connectionResult.hasResolution()){
+            try{
+                connectionResult.startResolutionForResult(this, CONNECTION_FAILURE_RESOLUTION_REQUEST);
+            }catch(IntentSender.SendIntentException e){
+                e.printStackTrace();
+            }
+        }else{
+            //Log.i(this.getClass().getSimpleName(), "Location services connection failed with code " + connectionResult.getErrorCode());
+            System.out.println("MainActivity - Location services connection failed with code " + connectionResult.getErrorCode());
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        //Log.i(this.getClass().getSimpleName(), "Location services suspended. Please reconnect.");
+        System.out.println("MainActivity - Location services suspended. Please reconnect.");
+    }
+
+
+
+    @Override
+    public void onLocationChanged(Location location) {
+        handleLocation(location);
+    }
+
+    private boolean isLocationServiceOn(){
+        LocationManager manager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        if(!manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
+            System.out.println("MainActivity - Location service is off");
+            return false;
+        }
+        System.out.println("MainActivity - Location service is on");
+        return true;
+    }
+
+    private void handleLocation(Location location){
+        // this will create marker based on the updated location that is changing from GoogleApiClient
+        if(location != null){
+            System.out.println("MainActivity - handle location, get current latitude and longitude");
+            this.currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+        }
+        //this.setCurrentLocationMarkerInGoogleMap(location);
+    }
 
 
     /**
-     * A placeholder fragment containing a simple view.
-     */
-
-    public static class PlaceholderFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
-        private RecyclerView mRecyclerView;
-        private RecyclerView.Adapter mAdapter;
-        private RecyclerView.LayoutManager mLayoutManager;
-        private CarparkList mCarparkList;
-
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-        public static PlaceholderFragment newInstance(int sectionNumber) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
-            Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-            fragment.setArguments(args);
-            return fragment;
-        }
-
-        public PlaceholderFragment() {
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-
-            mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_view_favourite);
-            mRecyclerView.setHasFixedSize(true);
-            mLayoutManager = new LinearLayoutManager(getActivity());
-            mRecyclerView.setLayoutManager(mLayoutManager);
-
-
-            mAdapter = new RecyclerViewAdapter();
-            mRecyclerView.setAdapter(mAdapter);
-            mRecyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL_LIST));
-
-            return rootView;
-        }
-
-        @Override
-        public void onAttach(Activity activity) {
-            super.onAttach(activity);
-            ((MainActivity) activity).onSectionAttached(
-                    getArguments().getInt(ARG_SECTION_NUMBER));
-        }
-
-
+     * Alert Dialogs
+     * **/
+    private void initAlertDialog(){
+        this.mAlertDialog = new AlertDialog.Builder(this);
     }
+
+    /**
+     * @param type number to indicate the type of message.\n 1. location service
+     * **/
+    private void showAlertDialog(int type){
+        if(this.mAlertDialog == null){
+            initAlertDialog();
+        }
+
+        switch(type){
+            case 1:
+                //this.mAlertDialog.setTitle(title);
+                this.mAlertDialog.setMessage(Constant.ALERT_DIALOG_GPS_DSIABLED_MESSAGE);
+
+                this.mAlertDialog.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int arg1) {
+                        openLocationSetting();
+                    }
+                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int arg1) {
+                        dialog.dismiss();
+                    }
+                });
+                break;
+
+        }
+
+        this.mAlertDialog.create().show();
+    }
+
+    private void openLocationSetting(){
+        Intent locationSettingIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+        startActivity(locationSettingIntent);
+    }
+
 
 }

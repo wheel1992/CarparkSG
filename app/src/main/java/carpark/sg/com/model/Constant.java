@@ -55,6 +55,10 @@ public class Constant {
     public static final double NO_LOCATION_LATITUDE = -1.0;
     public static final double NO_LOCATION_LONGITUDE = -1.0;
 
+    public static final String LOCATION_LATITUDE_EXAMPLE = "1.369784";
+    public static final String LOCATION_LONGITUDE_EXAMPLE = "103.849240";
+
+
     //Save history in a file
     public static final String HISTORY_FILE_NAME = "history.txt";
     public static final String FAVOURITE_FILE_NAME = "favourite.txt";

@@ -164,7 +164,7 @@ public class FragmentFavourite extends Fragment {
                 String lat = getFavouriteList().getList().get(position).getLatitude();
                 String lng = getFavouriteList().getList().get(position).getLongitude();
 
-                getMainActivity().searchCarpark(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE, address, lat, lng);
+                //getMainActivity().searchCarpark(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE, address, lat, lng);
             }
         });
     }

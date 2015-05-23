@@ -57,9 +57,13 @@ import carpark.sg.com.model.MarkerCarparkMap;
  * Use the {@link FragmentSearch#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class FragmentSearch extends Fragment implements GoogleApiClient.ConnectionCallbacks,
+public class FragmentSearch extends Fragment{
+    /*
+    *  implements GoogleApiClient.ConnectionCallbacks,
                                                 GoogleApiClient.OnConnectionFailedListener,
-                                                LocationListener{
+                                                LocationListener
+    * */
+
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM_TYPE_OF_SEARCH = "type";
@@ -166,6 +170,7 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
 
         }
 
+        /*
         mGoogleApiClient = new GoogleApiClient.Builder(this.getMainActivity())
                                 .addConnectionCallbacks(this)
                                 .addOnConnectionFailedListener(this)
@@ -176,10 +181,12 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
                                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                                 .setInterval(10 * 1000)
                                 .setFastestInterval(1 * 1000);
+        */
 
         return rootView;
     }
 
+    /*
     @Override
     public void onConnected(Bundle bundle){
 
@@ -217,7 +224,7 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
     public void onLocationChanged(Location location) {
         handleLocation(location);
     }
-
+    */
 
 
     @Override
@@ -226,22 +233,25 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
         if(mMapView != null){
             mMapView.onResume();
         }
-
+/*
         if(!isLocationServiceOn()){
             initAlertDialog();
             showAlertDialog(this.ALERT_DIALOG_TYPE_GPS);
         }
 
         mGoogleApiClient.connect();
+  */
     }
 
     @Override
     public void onPause(){
         super.onPause();
+        /*
         if(mGoogleApiClient.isConnected()){
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
             mGoogleApiClient.disconnect();
         }
+        */
     }
 
     @Override
