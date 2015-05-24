@@ -98,6 +98,9 @@ public class RecyclerViewFavouriteAdapter extends RecyclerView.Adapter<RecyclerV
             final String name = this.mFavouriteArray.get(position).getName();
             final String lat = this.mFavouriteArray.get(position).getLatitude();
             final String lng = this.mFavouriteArray.get(position).getLongitude();
+            final String neighbor = this.mFavouriteArray.get(position).getNeighborhood();
+            final int lot = this.mFavouriteArray.get(position).getAvailableLot();
+            final boolean isFav = this.mFavouriteArray.get(position).getIsFavourite();
 
             holder.setTextViewPrimary(name);
             holder.setImageView(R.drawable.ic_list_favourite_2);
@@ -105,7 +108,7 @@ public class RecyclerViewFavouriteAdapter extends RecyclerView.Adapter<RecyclerV
             holder.getImageDelete().setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    mMainActivity.removeFavourite(id, name, lat, lng);
+                    mMainActivity.removeFavourite(id, name, lat, lng, neighbor, lot, isFav);
                     mMainActivity.saveFavouriteList();
                     mMainActivity.clearFavouriteList();
                     mMainActivity.populateFavouriteList();

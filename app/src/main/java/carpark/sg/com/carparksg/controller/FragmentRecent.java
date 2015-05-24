@@ -165,7 +165,7 @@ public class FragmentRecent extends Fragment {
                 String lat = getHistoryList().getList().get(position).getLatitude();
                 String lng = getHistoryList().getList().get(position).getLongitude();
 
-                //getMainActivity().searchCarpark(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE, address, lat, lng);
+                getMainActivity().displayFragmentSearch(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE, address, lat, lng);
             }
         });
     }

@@ -56,7 +56,9 @@ public class FragmentCarparkDetail extends Fragment {
     private static final String ARG_CURRENT_USER_LATITUDE = "currentUserLatitude";
     private static final String ARG_IS_FAVOURITE = "isFavourite";
 
-    private static FragmentCarparkDetail fragmentCarparkDetail = new FragmentCarparkDetail();
+
+    //private static FragmentCarparkDetail fragmentCarparkDetail = new FragmentCarparkDetail();
+    private static FragmentCarparkDetail fragmentCarparkDetail;
 
     private Carpark mParamCarpark;
     private String mParamLatitude;
@@ -107,9 +109,11 @@ public class FragmentCarparkDetail extends Fragment {
      */
     // TODO: Rename and change types and number of parameters
     public static FragmentCarparkDetail newInstance(LatLng currentPosition, LatLng position, Carpark cp) {
-        if(fragmentCarparkDetail == null){
-            fragmentCarparkDetail = new FragmentCarparkDetail();
-        }
+        //if(!isInstanceCreated()){
+        initFragmentCarparkDetail();
+        //}else{
+
+        //}
 
         Bundle args = new Bundle();
         args.putSerializable(ARG_CARPARK, cp);
@@ -134,11 +138,8 @@ public class FragmentCarparkDetail extends Fragment {
         return fragmentCarparkDetail;
     }
 
-    private static void removeArgument(){
-        Bundle b = fragmentCarparkDetail.getArguments();
-        if(b != null){
-            fragmentCarparkDetail.removeArgument();
-        }
+    private static void initFragmentCarparkDetail(){
+        fragmentCarparkDetail = new FragmentCarparkDetail();
     }
 
     public FragmentCarparkDetail() {
@@ -194,10 +195,13 @@ public class FragmentCarparkDetail extends Fragment {
             this.setRecyclerDetailView(this.mParamCarpark);
         }
 
+        // refresh available lot
+        this.refreshAvailableLot();
+
+
         //check whether this carpark is inside favourite or not
         //update the favourite status as well
         this.saveFavouriteStatus(this.isMarkAsFavourite());
-
 
         if(this.mParamIsFavourite){ //is favourite
             //set button to unfavourite
@@ -458,13 +462,15 @@ public class FragmentCarparkDetail extends Fragment {
     private boolean markAsFavourite(){
         //Log.d()
         System.out.println("adding this carpark to favourite");
-        this.getMainActivity().addNewFavourite(this.mParamCarparkNumber, this.mParamCarparkAddress, this.mParamLatitude, this.mParamLongitude);
+        this.getMainActivity().addNewFavourite(this.mParamCarparkNumber, this.mParamCarparkAddress, this.mParamLatitude, this.mParamLongitude,
+                                            this.mParamCarparkNeighbourhood, this.mParamCarparkAvailableLot, this.mParamIsFavourite);
         return this.getMainActivity().saveFavouriteList();
     }
 
     private boolean markAsUnfavourite(){
         //Log.d()
-        this.getMainActivity().removeFavourite(this.mParamCarparkNumber, this.mParamCarparkAddress, this.mParamLatitude, this.mParamLongitude);
+        this.getMainActivity().removeFavourite(this.mParamCarparkNumber, this.mParamCarparkAddress, this.mParamLatitude, this.mParamLongitude,
+                                            this.mParamCarparkNeighbourhood, this.mParamCarparkAvailableLot, this.mParamIsFavourite);
         return this.getMainActivity().saveFavouriteList();
     }
 

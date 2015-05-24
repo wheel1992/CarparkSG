@@ -12,9 +12,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import java.util.HashMap;
 
 import carpark.sg.com.carparksg.R;
+import carpark.sg.com.carparksg.logic.Parser;
+import carpark.sg.com.model.Carpark;
 import carpark.sg.com.model.Constant;
 import carpark.sg.com.model.Favourite;
 import carpark.sg.com.model.FavouriteList;
@@ -160,11 +164,27 @@ public class FragmentFavourite extends Fragment {
         ((RecyclerViewFavouriteAdapter)mRecyclerAdapter).setOnItemClickListener(new RecyclerViewFavouriteAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(View view, int position) {
+                String id = getFavouriteList().getList().get(position).getID();
                 String address = getFavouriteList().getList().get(position).getName();
+                String neighborhood = getFavouriteList().getList().get(position).getNeighborhood();
                 String lat = getFavouriteList().getList().get(position).getLatitude();
                 String lng = getFavouriteList().getList().get(position).getLongitude();
+                int lot = getFavouriteList().getList().get(position).getAvailableLot();
+                boolean isFavourite = getFavouriteList().getList().get(position).getIsFavourite();
+                boolean hasDetail = false;
 
-                //getMainActivity().searchCarpark(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE, address, lat, lng);
+                LatLng currentUserLocation = getMainActivity().getCurrentLocation();
+                LatLng carparkLocation = new LatLng(Parser.convertStringToDouble(lat),
+                                                Parser.convertStringToDouble(lng));
+
+                Carpark cp = new Carpark(id, lng, lat);
+                cp.setNeighborhood(neighborhood);
+                cp.setAddress(address);
+                cp.setAvailableLot(lot);
+                cp.setIsFavourite(isFavourite);
+                cp.setHasDetail(hasDetail);
+
+                getMainActivity().displayFragmentCarparkDetail(currentUserLocation, carparkLocation, cp);
             }
         });
     }

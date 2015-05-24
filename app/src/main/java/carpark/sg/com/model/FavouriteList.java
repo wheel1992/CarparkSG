@@ -42,10 +42,13 @@ public class FavouriteList {
                 JSONObject obj = array.getJSONObject(i);
                 String id = obj.getString("id");
                 String name = obj.getString("name");
+                String neighbor = obj.getString("neighbor");
                 String lat = obj.getString("lat");
                 String lng = obj.getString("long");
+                int lot = obj.getInt("lot");
+                boolean isFav = obj.getBoolean("isFavourite");
 
-                Favourite element = new Favourite(id, name, lat, lng);
+                Favourite element = new Favourite(id, name, lat, lng, neighbor, lot, isFav);
                 mFavouriteMap.put(name, element);
             }
         }
@@ -67,6 +70,9 @@ public class FavouriteList {
             obj.put("name", element.getName());
             obj.put("lat", element.getLatitude());
             obj.put("long", element.getLongitude());
+            obj.put("neighbor", element.getNeighborhood());
+            obj.put("lot", element.getAvailableLot());
+            obj.put("isFavourite", element.getIsFavourite());
 
             array.put(obj);
         }

@@ -57,7 +57,9 @@ import carpark.sg.com.model.MarkerCarparkMap;
  * Use the {@link FragmentSearch#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class FragmentSearch extends Fragment{
+public class FragmentSearch extends Fragment implements GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
+        LocationListener{
     /*
     *  implements GoogleApiClient.ConnectionCallbacks,
                                                 GoogleApiClient.OnConnectionFailedListener,
@@ -95,10 +97,10 @@ public class FragmentSearch extends Fragment{
     // Marker
     private MarkerCarparkMap markerMap;
 
-
     //Location
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
+    private boolean useCurrentLocation;
 
     private MainActivity mActivity;
     private static FragmentSearch mFragmentSearch = new FragmentSearch();
@@ -131,6 +133,7 @@ public class FragmentSearch extends Fragment{
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        System.out.println("FragmentSearch - onCreate");
         if (getArguments() != null) {
             mParamType = getArguments().getInt(ARG_PARAM_TYPE_OF_SEARCH);
             mParamAddress = getArguments().getString(ARG_PARAM_ADDRESS);
@@ -143,120 +146,88 @@ public class FragmentSearch extends Fragment{
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-
-        Log.i(this.getMainActivity().getClass().getSimpleName(), "Fragment onCreateView");
+        System.out.println("FragmentSearch - onCreateView");
+        //Log.i(this.getMainActivity().getClass().getSimpleName(), "Fragment onCreateView");
 
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_search, container, false);
         this.fragmentContainer = container;
 
         MapsInitializer.initialize(this.getMainActivity());
-        mMapView = (MapView) rootView.findViewById(R.id.map);
-        mMapView.onCreate(mBundleMap);
-        initGoogleMap(rootView);
-        initMarkerMap();
+        this.mMapView = (MapView) rootView.findViewById(R.id.map);
+        this.mMapView.onCreate(mBundleMap);
+        this.initGoogleMap(rootView);
+        this.initMarkerMap();
 
-        // execute asynctask
-        httpAsyncTask = new httpConnectionAsyncTask(mParamType);
-        switch(mParamType){
-            case Constant.SEARCH_HDB_NEARBY_CARPARK_USING_ADDRESS: //search by address, followed by coordinate
-                httpAsyncTask.execute(String.valueOf(mParamType), mParamAddress);
-                break;
-            case Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE: //search by coordinate
-                httpAsyncTask.execute(String.valueOf(mParamType), mParamLatitude, mParamLongitude);
-                break;
-            case Constant.SEARCH_HDB_SPECIFIC_CARPARK_DETAIL: //search carpark detail
-                break;
-
-        }
-
-        /*
-        mGoogleApiClient = new GoogleApiClient.Builder(this.getMainActivity())
+        this.mGoogleApiClient = new GoogleApiClient.Builder(this.getMainActivity())
                                 .addConnectionCallbacks(this)
                                 .addOnConnectionFailedListener(this)
                                 .addApi(LocationServices.API)
                                 .build();
 
-        mLocationRequest = LocationRequest.create()
+        this.mLocationRequest = LocationRequest.create()
                                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                                 .setInterval(10 * 1000)
-                                .setFastestInterval(1 * 1000);
-        */
+                                .setFastestInterval(1 * 1000)
+                                .setNumUpdates(1);
+
+        //let's assume currentlocation is based on default location
+        //this.currentLocation = new LatLng(Parser.convertStringToDouble(this.mParamLatitude),
+        //                              Parser.convertStringToDouble(this.mParamLongitude));
+
+        //System.out.println("FragmentSearch - old current location -> " + currentLocation.latitude + ", " + currentLocation.longitude);
 
         return rootView;
     }
 
-    /*
     @Override
-    public void onConnected(Bundle bundle){
-
-        Log.i(this.getMainActivity().getClass().getSimpleName(), "Location services connected.");
-        Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if(this.isLocationServiceOn()){ // check if location service is on
-            if(location == null){
-                LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-            }else{
-                handleLocation(location);
-            }
-        }
+    public void onStart(){
+        super.onStart();
 
     }
-
-    @Override
-    public void onConnectionSuspended(int i){
-        Log.i(this.getMainActivity().getClass().getSimpleName(), "Location services suspended. Please reconnect.");
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-        if(connectionResult.hasResolution()){
-            try{
-                connectionResult.startResolutionForResult(this.getMainActivity(), CONNECTION_FAILURE_RESOLUTION_REQUEST);
-            }catch(IntentSender.SendIntentException e){
-                e.printStackTrace();
-            }
-        }else{
-            Log.i(this.getMainActivity().getClass().getSimpleName(), "Location services connection failed with code " + connectionResult.getErrorCode());
-        }
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        handleLocation(location);
-    }
-    */
 
 
     @Override
     public void onResume(){
         super.onResume();
+        System.out.println("FragmentSearch - onResume");
         if(mMapView != null){
             mMapView.onResume();
         }
-/*
+
+        this.mGoogleApiClient.connect();
+
         if(!isLocationServiceOn()){
             initAlertDialog();
             showAlertDialog(this.ALERT_DIALOG_TYPE_GPS);
+            System.out.println("FragmentSearch - show alert dialog");
+            //update paramter lat and long
+            //this.updateLocationArgument(Parser.convertDoubleToString(this.currentLocation.latitude),
+            //        Parser.convertDoubleToString(this.currentLocation.longitude));
+            this.handleDefaultLocation();
+        }else{
+            System.out.println("FragmentSearch - alert dialog is not shown because location service is on");
         }
 
-        mGoogleApiClient.connect();
-  */
     }
 
     @Override
     public void onPause(){
         super.onPause();
-        /*
+        System.out.println("FragmentSearch - onPause");
+
         if(mGoogleApiClient.isConnected()){
-            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+            this.stopLocationUpdates();
+            //LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
             mGoogleApiClient.disconnect();
         }
-        */
+
     }
 
     @Override
     public void onDestroy(){
         super.onDestroy();
+        System.out.println("FragmentSearch - onDestroy");
         if(mMapView != null){
             mMapView.onDestroy();
         }
@@ -292,6 +263,69 @@ public class FragmentSearch extends Fragment{
         mListener = null;
     }
 
+    @Override
+    public void onConnected(Bundle bundle){
+
+        //Log.i(this.getMainActivity().getClass().getSimpleName(), "Location services connected.");
+        System.out.println("FragmentSearch - Location services connected");
+        Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if(this.isLocationServiceOn()){ // check if location service is on
+            if(location == null){
+                System.out.println("FragmentSearch - onConnected requestLocationUpdates");
+                this.startLocationUpdates();
+                //LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+                //this.handleDefaultLocation();
+            }else{
+                System.out.println("FragmentSearch - onConnected handleCurrentLocation");
+                LatLng loc = new LatLng(location.getLatitude(), location.getLongitude());
+                this.handleCurrentLocation(loc);
+                //this.running();
+            }
+        }
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i){
+        //Log.i(this.getMainActivity().getClass().getSimpleName(), "Location services suspended. Please reconnect.");
+        System.out.println("FragmentSearch - Location services suspended. Please reconnect");
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        if(connectionResult.hasResolution()){
+            try{
+                connectionResult.startResolutionForResult(this.getMainActivity(), CONNECTION_FAILURE_RESOLUTION_REQUEST);
+            }catch(IntentSender.SendIntentException e){
+                e.printStackTrace();
+            }
+        }else{
+            //Log.i(this.getMainActivity().getClass().getSimpleName(), "Location services connection failed with code " + connectionResult.getErrorCode());
+            System.out.println("FragmentSearch - Location services connection failed with code " + connectionResult.getErrorCode());
+            this.handleDefaultLocation();
+        }
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        System.out.println("FragmentSearch - onLocationChanged -> " + location.getLatitude() + ", " + location.getLongitude());
+        LatLng loc = new LatLng(location.getLatitude(), location.getLongitude());
+        this.handleCurrentLocation(loc);
+    }
+
+    private void startLocationUpdates() {
+        System.out.println("MainActivity - Start location updates");
+        LocationServices.FusedLocationApi.requestLocationUpdates(
+                mGoogleApiClient, mLocationRequest, this);
+    }
+
+    private void stopLocationUpdates() {
+        System.out.println("MainActivity - Stop location updates");
+        LocationServices.FusedLocationApi.removeLocationUpdates(
+                mGoogleApiClient, this);
+    }
+
+
     private void initMainActivity(MainActivity activity){
         this.mActivity = activity;
     }
@@ -323,8 +357,13 @@ public class FragmentSearch extends Fragment{
             @Override
             public boolean onMyLocationButtonClick() {
                 Location currentLocation = mMap.getMyLocation();
-                if (currentLocation == null) {
+                if (currentLocation == null || !isLocationServiceOn()) {
                     showAlertDialog(ALERT_DIALOG_TYPE_GPS);
+                }else{
+                    LatLng loc = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+                    //set the type of search to use current location
+                    mParamType = Constant.SEARCH_HDB_NEARBY_CARPARK_USING_CURRENT_LOCATION;
+                    handleCurrentLocation(loc);
                 }
                 return true;
             }
@@ -348,6 +387,61 @@ public class FragmentSearch extends Fragment{
             }
         });
     }
+
+    private void running(){
+        // execute asynctask
+        httpAsyncTask = new httpConnectionAsyncTask(mParamType);
+        switch(mParamType){
+            case Constant.SEARCH_HDB_NEARBY_CARPARK_USING_ADDRESS: //search by address, followed by coordinate
+                httpAsyncTask.execute(String.valueOf(mParamType), mParamAddress);
+                break;
+
+            case Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE: //search by coordinate
+                httpAsyncTask.execute(String.valueOf(mParamType), mParamLatitude, mParamLongitude);
+                break;
+
+            case Constant.SEARCH_HDB_NEARBY_CARPARK_USING_CURRENT_LOCATION: //search by current location
+                httpAsyncTask.execute(String.valueOf(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE),
+                        Parser.convertDoubleToString(this.currentLocation.latitude),
+                        Parser.convertDoubleToString(this.currentLocation.longitude));
+
+            case Constant.SEARCH_HDB_SPECIFIC_CARPARK_DETAIL: //search carpark detail
+                break;
+        }
+    }
+
+    private void handleCurrentLocation(LatLng location){
+        if(location != null){
+            this.currentLocation = new LatLng(location.latitude, location.longitude);
+            this.updateMainActivityLocation(location.latitude, location.longitude);
+            this.running();
+        }
+        //this.setCurrentLocationMarkerInGoogleMap(location);
+    }
+
+    private void handleDefaultLocation(){
+        this.currentLocation = new LatLng(Parser.convertStringToDouble(Constant.LOCATION_LATITUDE_EXAMPLE),
+                                    Parser.convertStringToDouble(Constant.LOCATION_LONGITUDE_EXAMPLE));
+        this.updateMainActivityLocation(currentLocation.latitude, currentLocation.longitude);
+        this.running();
+    }
+
+
+    private boolean isLocationServiceOn(){
+        LocationManager manager = (LocationManager) this.getMainActivity().getSystemService(Context.LOCATION_SERVICE);
+        if(!manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
+            System.out.println("FragmentSearch - Location service is off");
+            return false;
+        }
+        System.out.println("FragmentSearch - Location service is on");
+        return true;
+    }
+
+    private void updateMainActivityLocation(double lat, double lng){
+        LatLng loc = new LatLng(lat, lng);
+        getMainActivity().setCurrentLocation(loc);
+    }
+
 
     private void setCarparkMarkerInGoogleMap(CarparkList mList){
         String lat = "";
@@ -402,25 +496,6 @@ public class FragmentSearch extends Fragment{
 
     private void addInfoWindowToGoogleMap(MarkerCarparkMap m){
         this.mMap.setInfoWindowAdapter(new MarkerInfoWindowAdapter(this.fragmentContainer, m));
-    }
-
-    private void handleLocation(Location location){
-        // this will create marker based on the updated location that is changing from GoogleApiClient
-        if(location != null){
-            currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
-        }
-
-        //this.setCurrentLocationMarkerInGoogleMap(location);
-    }
-
-    private boolean isLocationServiceOn(){
-        LocationManager manager = (LocationManager) this.getMainActivity().getSystemService(Context.LOCATION_SERVICE);
-        if(!manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
-            System.out.println("Location service is off");
-            return false;
-        }
-        System.out.println("Location service is on");
-        return true;
     }
 
     private void initMarkerMap(){
@@ -520,7 +595,7 @@ public class FragmentSearch extends Fragment{
     }
 
     private void updateHistory(String address, Coordinate point){
-        System.out.println("Updating History");
+        System.out.println("FragmentSearch - Updating History");
         getMainActivity().addNewHistory(address, point.getLatitude(), point.getLongitude());
         getMainActivity().saveHistoryList();
         getMainActivity().refreshSearchAdapter();
@@ -553,7 +628,6 @@ public class FragmentSearch extends Fragment{
                     if(result.equals("") || result.isEmpty()){
                         //error message
                     }else{
-                        //tv.setText(result);
                         // result in json object
                         try{
                             CarparkList mCarparkList = Parser.parseCarparkListFromJson(result);
@@ -562,7 +636,12 @@ public class FragmentSearch extends Fragment{
                             setSearchInputCoordinateMarkerInGoogleMap(searchCoordinate); //set marker for search coordinate
 
                             // update history from main activity
-                            updateHistory(mParamAddress, searchCoordinate);
+                            // exclude using location
+                            // only store user search address
+                            if(queryType != Constant.SEARCH_HDB_NEARBY_CARPARK_USING_CURRENT_LOCATION){
+                                updateHistory(mParamAddress, searchCoordinate);
+                            }
+
 
                         }catch(JSONException e){
                             //print error

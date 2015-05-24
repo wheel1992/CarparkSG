@@ -8,6 +8,7 @@ public class Constant {
     public static final int SEARCH_HDB_NEARBY_CARPARK_USING_ADDRESS = 1;
     public static final int SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE = 2;
     public static final int SEARCH_HDB_SPECIFIC_CARPARK_DETAIL = 3;
+    public static final int SEARCH_HDB_NEARBY_CARPARK_USING_CURRENT_LOCATION = 99;
 
     // URL
     public static final String DUMMY_ADDRESS = "[address]";

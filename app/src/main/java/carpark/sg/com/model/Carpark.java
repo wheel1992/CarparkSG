@@ -76,6 +76,7 @@ public class Carpark implements Serializable {
     public String get_shortTermParkingScheme(){
         return this._shortTermParkingScheme;
     }
+
     public String getNightParkingScheme(){
         return this._nightParkingScheme;
     }
