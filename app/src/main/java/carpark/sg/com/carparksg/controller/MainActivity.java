@@ -26,6 +26,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
@@ -94,6 +95,8 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
      */
     private CharSequence mTitle;
+
+    private boolean exit = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -432,24 +435,41 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
             System.out.println("MainActivity - fragmentManager is null, back pressed");
             super.onBackPressed();
         }
-        */
 
         System.out.println("MainActivity - ==== OLD STACK ====");
         for(int i = 0; i<fragmentManager.getBackStackEntryCount(); i++){
             System.out.println(i + ". -" + fragmentManager.getBackStackEntryAt(i));
         }
+*/
+        if(this.fragmentManager.getBackStackEntryCount() > 0){
+            fragmentManager.popBackStack();
+            fragmentManager.executePendingTransactions();
+        }else{
+            if(this.exit){
+                this.finish();
+            }else{
+                Toast.makeText(this, "Press back again to exit program.",
+                        Toast.LENGTH_SHORT).show();
+                this.exit = true;
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        exit = false;
+                    }//end run
+                }, 1 * 1000);
+            }
 
-        //String latestName =  fragmentManager.getBackStackEntryAt(fragmentManager.getBackStackEntryCount() - 1).getName();
-        //System.out.println("MainActivity - latestName -> " + latestName);
+        }
 
-        //fragmentManager.popBackStack(latestName, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-        fragmentManager.popBackStack();
-        fragmentManager.executePendingTransactions();
 
+
+
+        /*
         System.out.println("MainActivity - ==== NEW STACK ====");
         for(int i = 0; i<fragmentManager.getBackStackEntryCount(); i++){
             System.out.println(i + ". -" + fragmentManager.getBackStackEntryAt(i));
         }
+        */
 
     }
 
