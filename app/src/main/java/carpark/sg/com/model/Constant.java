@@ -35,11 +35,11 @@ public class Constant {
     // AlertDialog
     public static final String ALERT_DIALOG_GPS_DSIABLED_MESSAGE = "Your GPS seems to be disabled, would you like to enable it?";
 
-
     // Fragment names to add back stack
     public static final String FRAGMENT_SEARCH_NAME = "FragmentSearch";
     public static final String FRAGMENT_FAVOURITE = "FragmentFavourite";
     public static final String FRAGMENT_RECENT = "FragmentRecent";
+    public static final String FRAGMENT_SETTING = "FragmentSetting";
     public static final String FRAGMENT_CARPARK_DETAIL_NAME = "FragmentCarparkDetail";
 
 
@@ -52,18 +52,22 @@ public class Constant {
     public static final int INDEX_LOT_LOADING = -2;
     public static final int INDEX_LOT_ERROR_LOADING = -3;
 
+    //Fragment Setting
+    public static final int DEFAULT_SETTING_RADIUS = 500;
+
+
+
     //Coordinate value
     public static final double NO_LOCATION_LATITUDE = -1.0;
     public static final double NO_LOCATION_LONGITUDE = -1.0;
-
     public static final String LOCATION_LATITUDE_EXAMPLE = "1.369784";
     public static final String LOCATION_LONGITUDE_EXAMPLE = "103.849240";
 
 
-    //Save history in a file
+    //Preferences
     public static final String HISTORY_FILE_NAME = "history.txt";
     public static final String FAVOURITE_FILE_NAME = "favourite.txt";
-
+    public static final String SETTING_FILE_NAME = "setting.txt";
 
     //Error messages
     public static final String ERROR_NO_FAVOURITE = "No favourite found.";

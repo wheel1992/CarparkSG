@@ -17,18 +17,12 @@ import java.io.InputStreamReader;
  */
 public class Preferences {
 
-    //private static final String HISTORY_FILE_NAME = "carparksg_preference";
-    //private static final String FAVOURITE_FILE_NAME = "favourite";
     private static Preferences mPreferences;
-    private SharedPreferences mPref;
     private static Context mContext;
-
-    private SharedPreferences.Editor mEditor;
 
     public static Preferences getInstance(Context context){
         mContext = context;
         initPreferences();
-        //mPreferences.initSharedPreferences(context);
         return mPreferences;
     }
 
@@ -38,17 +32,11 @@ public class Preferences {
         }
     }
 
-
+    // ========= Get methods =============
     public String getHistory() throws FileNotFoundException, IOException{
-        //String history = getString(PREFERENCE_KEY_JSON_HISTORY);
-        //return history;
         //Read text from file
         String value = this.getStringFromFile(Constant.HISTORY_FILE_NAME);
         return value;
-    }
-
-    public void setHistory(String history) throws FileNotFoundException, IOException{
-        this.setStringToFile(Constant.HISTORY_FILE_NAME, history);
     }
 
     public String getFavourite() throws FileNotFoundException, IOException{
@@ -56,8 +44,23 @@ public class Preferences {
         return value;
     }
 
+    public String getSetting() throws FileNotFoundException, IOException{
+        String value = "";
+        value = this.getStringFromFile(Constant.SETTING_FILE_NAME);
+        return value;
+    }
+
+    // ========= Set methods =============
+    public void setHistory(String history) throws FileNotFoundException, IOException{
+        this.setStringToFile(Constant.HISTORY_FILE_NAME, history);
+    }
+
     public void setFavourite(String favourite) throws FileNotFoundException, IOException{
         this.setStringToFile(Constant.FAVOURITE_FILE_NAME, favourite);
+    }
+
+    public void setSetting(String setting) throws FileNotFoundException, IOException{
+        this.setStringToFile(Constant.SETTING_FILE_NAME, setting);
     }
 
 
@@ -82,12 +85,6 @@ public class Preferences {
         fos.close();
 
     }
-
-    //private void setString(String key, String value){
-        //this.mEditor = mPref.edit();
-        //this.mEditor.putString(key, value);
-        //this.mEditor.commit();
-    //}
 
 
 

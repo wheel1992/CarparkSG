@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Set;
 
 import carpark.sg.com.carparksg.R;
 import carpark.sg.com.model.Carpark;
@@ -48,13 +49,15 @@ import carpark.sg.com.model.FavouriteList;
 import carpark.sg.com.model.History;
 import carpark.sg.com.model.HistoryList;
 import carpark.sg.com.model.Preferences;
+import carpark.sg.com.model.Setting;
 
 
 public class MainActivity extends AppCompatActivity implements NavigationDrawerFragment.NavigationDrawerCallbacks,
         FragmentFavourite.OnFragmentInteractionListener,
         FragmentRecent.OnFragmentInteractionListener,
         FragmentSearch.OnFragmentInteractionListener,
-        FragmentCarparkDetail.OnFragmentInteractionListener{
+        FragmentCarparkDetail.OnFragmentInteractionListener,
+        FragmentSetting.OnFragmentInteractionListener{
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -69,6 +72,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
     private HistoryList mHistoryList;
     private FavouriteList mFavouriteList;
     private Preferences mPreferences;
+    private Setting mSetting;
     private SearchDropDownAdapter mSearchAdapter;
     private boolean searchDropDownListShown;
 
@@ -82,8 +86,6 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
     private FragmentManager fragmentManager;
     private FragmentTransaction fragmentTransaction;
     private FragmentSearch fragmentSearch;
-    private FragmentRecent fragmentRecent;
-    private FragmentFavourite fragmentFavourite;
     private FragmentCarparkDetail fragmentCarparkDetail;
 
     //Location
@@ -117,12 +119,18 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
 
         // Custom preference
         this.initPreferences();
+
         // History list
         this.initHistoryList();
         this.populateHistoryList();
+
         // Favourite list
         this.initFavouriteList();
         this.populateFavouriteList();
+
+        //Setting
+        this.initSetting();
+        this.populateSetting();
 
         // Keyboard
         this.initKeyboard();
@@ -231,7 +239,8 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
                 fragName = Constant.FRAGMENT_RECENT;
                 break;
             case 2:
-                //openFragment = FragmentSetting.newInstance(param1, param2);
+                openFragment = FragmentSetting.newInstance(this.mSetting);
+                fragName = Constant.FRAGMENT_SETTING;
                 break;
         }
 
@@ -382,8 +391,6 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-
         if (id == R.id.action_settings) {
             return true;
 
@@ -442,8 +449,8 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         }
 */
         if(this.fragmentManager.getBackStackEntryCount() > 0){
-            fragmentManager.popBackStack();
-            fragmentManager.executePendingTransactions();
+            this.fragmentManager.popBackStack();
+            this.fragmentManager.executePendingTransactions();
         }else{
             if(this.exit){
                 this.finish();
@@ -460,16 +467,6 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
             }
 
         }
-
-
-
-
-        /*
-        System.out.println("MainActivity - ==== NEW STACK ====");
-        for(int i = 0; i<fragmentManager.getBackStackEntryCount(); i++){
-            System.out.println(i + ". -" + fragmentManager.getBackStackEntryAt(i));
-        }
-        */
 
     }
 
@@ -488,6 +485,11 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
     // Initialize favourite list
     public void initFavouriteList(){
         this.mFavouriteList = FavouriteList.getInstance();
+    }
+
+    // Initalize setting
+    public void initSetting(){
+        this.mSetting = Setting.getInstance();
     }
 
     public void clearHistoryList(){
@@ -531,13 +533,31 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
 
     public void populateFavouriteList(){
         try{
-            String favouriteValue = mPreferences.getFavourite();
+            String favouriteValue = this.mPreferences.getFavourite();
             System.out.println("MainActivity - JSON string from Favourite - " + favouriteValue);
             this.mFavouriteList.parseStringToMap(favouriteValue);
         }catch(Exception e){
             //print error
             e.printStackTrace();
         }
+    }
+
+    public void populateSetting(){
+        String settingValue = "";
+        try{
+            settingValue = this.mPreferences.getSetting();
+            System.out.println("MainActivity - JSON string from setting - " + settingValue);
+        }catch(Exception e){
+            //print error
+            e.printStackTrace();
+        }finally {
+            try{
+                Setting.parseJsonToSetting(settingValue);
+            }catch(JSONException e){
+                e.printStackTrace();
+            }
+        }
+
     }
 
     public void addNewHistory(String name, String lat, String lng){
@@ -581,6 +601,26 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         try{
             String value = mFavouriteList.parseMapToString();
             mPreferences.setFavourite(value);
+            return true;
+        }catch(JSONException e){
+            //print error
+            e.printStackTrace();
+            return false;
+        }catch (FileNotFoundException e){
+            //print error
+            e.printStackTrace();
+            return false;
+        }catch (IOException e){
+            //print error
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean saveSetting(){
+        try{
+            String value = Setting.parseSettingToJson();
+            mPreferences.setSetting(value);
             return true;
         }catch(JSONException e){
             //print error
@@ -835,6 +875,11 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
 
     }
 
+    @Override
+    public void onFragmentSettingInteraction(Uri uri) {
+
+    }
+
     /**
      * For Google API Client - Location stuffs
      * **/
@@ -845,6 +890,8 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
     public LatLng getCurrentLocation(){
         return this.currentLocation;
     }
+
+
 
 
 

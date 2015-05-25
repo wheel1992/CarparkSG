@@ -8,7 +8,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.appyvet.rangebar.RangeBar;
+
 import carpark.sg.com.carparksg.R;
+import carpark.sg.com.carparksg.logic.Parser;
+import carpark.sg.com.model.Setting;
 
 
 /**
@@ -22,29 +26,28 @@ import carpark.sg.com.carparksg.R;
 public class FragmentSetting extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    private static final String ARG_RADIUS = "radius";
+   // private static final String ARG_PARAM2 = "param2";
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private int mParamRadius;
 
     private OnFragmentInteractionListener mListener;
+
+    private MainActivity mActivity;
+    private RangeBar mRangeBar;
 
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
+     * @param setting Passed in Setting object.
      * @return A new instance of fragment FragmentSetting.
      */
     // TODO: Rename and change types and number of parameters
-    public static FragmentSetting newInstance(String param1, String param2) {
+    public static FragmentSetting newInstance(Setting setting) {
         FragmentSetting fragment = new FragmentSetting();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
+        args.putInt(ARG_RADIUS, setting.getRadius());
         fragment.setArguments(args);
         return fragment;
     }
@@ -57,28 +60,31 @@ public class FragmentSetting extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            mParamRadius = getArguments().getInt(ARG_RADIUS);
         }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        View rootView = inflater.inflate(R.layout.fragment_setting, container, false);
+
+        this.initRangeBar(rootView);
+
+        float pinValue = Parser.convertIntegerToFloat(this.mParamRadius);
+        this.setRangeBarValue(pinValue);
+
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_setting, container, false);
+        return rootView;
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
-        }
-    }
+
 
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        this.initMainActivity((MainActivity) activity);
         try {
             mListener = (OnFragmentInteractionListener) activity;
         } catch (ClassCastException e) {
@@ -93,6 +99,38 @@ public class FragmentSetting extends Fragment {
         mListener = null;
     }
 
+    private void initMainActivity(MainActivity activity){
+        this.mActivity = activity;
+    }
+
+    private MainActivity getMainActivity(){
+        return this.mActivity;
+    }
+
+    private void initRangeBar(View v){
+        this.mRangeBar = (RangeBar) v.findViewById(R.id.rangebar);
+        this.mRangeBar.setOnRangeBarChangeListener(new RangeBar.OnRangeBarChangeListener() {
+            @Override
+            public void onRangeChangeListener(RangeBar rangeBar, int leftPinIndex,
+                                              int rightPinIndex, String leftPinValue, String rightPinValue) {
+
+                System.out.println("Fragment Setting - " + leftPinValue + " - " + rightPinValue);
+
+            }
+        });
+
+    }
+
+
+    private void setRangeBarValue(float val){
+        this.mRangeBar.setSeekPinByValue(val);
+    }
+
+    private void saveSetting(){
+
+    }
+
+
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
@@ -105,7 +143,14 @@ public class FragmentSetting extends Fragment {
      */
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
-        public void onFragmentInteraction(Uri uri);
+        public void onFragmentSettingInteraction(Uri uri);
+    }
+
+    // TODO: Rename method, update argument and hook method into UI event
+    public void onButtonPressed(Uri uri) {
+        if (mListener != null) {
+            mListener.onFragmentSettingInteraction(uri);
+        }
     }
 
 }

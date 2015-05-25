@@ -197,8 +197,7 @@ public class Parser {
         return Uri.encode(raw);
     }
 
-
-    private static boolean isValueNumberic(String value){
+    public static boolean isValueNumberic(String value){
         try {
             int d = Integer.parseInt(value);
         } catch(NumberFormatException e) {
@@ -228,6 +227,15 @@ public class Parser {
 
     public static double convertStringToDouble(String value){
         return Double.valueOf(value);
+    }
+
+    public static float convertIntegerToFloat(int value){
+        Float f = new Float(value);
+        return f.floatValue();
+    }
+
+    public static int convertFloatToInteger(float value){
+        return Math.round(value);
     }
 
     public static String toTitleCase(final String init) {
