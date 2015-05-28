@@ -4,17 +4,11 @@
     android:orientation="vertical"
     android:background="@color/white">
 
-    <com.appyvet.rangebar.RangeBar
-        xmlns:custom="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/rangebar"
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recycler_view_setting"
         android:layout_width="match_parent"
-        android:layout_height="72dp"
-        custom:tickInterval="100"
-        custom:tickStart="100"
-        custom:tickEnd="1000"
-        custom:rangeBar="false"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"/>
+        android:layout_height="wrap_content">
 
-
+    </android.support.v7.widget.RecyclerView>
+    
 </LinearLayout>

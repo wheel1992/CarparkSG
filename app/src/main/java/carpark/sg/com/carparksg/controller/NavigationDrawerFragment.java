@@ -220,6 +220,7 @@ public class NavigationDrawerFragment extends Fragment {
             this.mDrawerListName.add(getString(R.string.title_fragment_favorite));
             this.mDrawerListName.add(getString(R.string.title_fragment_recent));
             this.mDrawerListName.add(getString(R.string.title_fragment_setting));
+            this.mDrawerListName.add(getString(R.string.title_fragment_about));
         }
     }
 

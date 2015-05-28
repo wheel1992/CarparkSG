@@ -21,6 +21,9 @@
     <color name="card_view_green" type="color">#8BC34A</color>
     <color name="card_view_red" type="color">#F44336</color>
 
+    <color name="dialog_grey" type="color">#424242</color>
 
+    <color name="rangebar_darkpink" type="color">#C2185B</color>
+    <color name="rangebar_pink" type="color">#E91E63</color>
 
 </resources>

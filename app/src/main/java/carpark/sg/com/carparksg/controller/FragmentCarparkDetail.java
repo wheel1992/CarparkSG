@@ -478,7 +478,8 @@ public class FragmentCarparkDetail extends Fragment {
     private void refreshAvailableLot(){
         initAsyncTask(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE);
         // get carpark availability lot
-        httpAsyncTask.execute(String.valueOf(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE), mParamLatitude, mParamLongitude);
+        httpAsyncTask.execute(String.valueOf(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE), mParamLatitude, mParamLongitude,
+                Parser.convertIntegerToString(this.getMainActivity().getSettingRadius()));
 
     }
 

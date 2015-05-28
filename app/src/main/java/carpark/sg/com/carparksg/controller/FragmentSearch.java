@@ -72,6 +72,7 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
     private static final String ARG_PARAM_ADDRESS = "address";
     private static final String ARG_PARAM_LATITUDE = "latitude";
     private static final String ARG_PARAM_LONGITUDE = "longitude";
+    private static final String ARG_PARAM_RADIUS = "radius";
 
     private static final int ALERT_DIALOG_TYPE_GPS = 1;
     private static final int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
@@ -81,6 +82,7 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
     private String mParamAddress;
     private String mParamLatitude;
     private String mParamLongitude;
+    private String mParamRadius;
 
     private OnFragmentInteractionListener mListener;
 
@@ -106,14 +108,7 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
     private static FragmentSearch mFragmentSearch = new FragmentSearch();
     private httpConnectionAsyncTask httpAsyncTask;
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param paramAddress Parameter 1.
-     * @return A new instance of fragment FragmentSearch.
-     */
-    public static FragmentSearch newInstance(int type, String paramAddress, String paramLat, String paramLong) {
+    public static FragmentSearch newInstance(int type, String paramAddress, String paramLat, String paramLong, String paramRadius) {
         //if(mFragmentSearch == null){
             mFragmentSearch = new FragmentSearch();
         //}
@@ -122,6 +117,7 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
         args.putString(ARG_PARAM_ADDRESS, paramAddress);
         args.putString(ARG_PARAM_LATITUDE, paramLat);
         args.putString(ARG_PARAM_LONGITUDE, paramLong);
+        args.putString(ARG_PARAM_RADIUS, paramRadius);
         mFragmentSearch.setArguments(args);
         return mFragmentSearch;
     }
@@ -139,6 +135,7 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
             mParamAddress = getArguments().getString(ARG_PARAM_ADDRESS);
             mParamLatitude = getArguments().getString(ARG_PARAM_LATITUDE);
             mParamLongitude = getArguments().getString(ARG_PARAM_LONGITUDE);
+            mParamRadius = getArguments().getString(ARG_PARAM_RADIUS);
         }
     }
 
@@ -393,17 +390,20 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
         httpAsyncTask = new httpConnectionAsyncTask(mParamType);
         switch(mParamType){
             case Constant.SEARCH_HDB_NEARBY_CARPARK_USING_ADDRESS: //search by address, followed by coordinate
-                httpAsyncTask.execute(String.valueOf(mParamType), mParamAddress);
+                httpAsyncTask.execute(String.valueOf(mParamType), mParamAddress,
+                        Parser.convertIntegerToString(getMainActivity().getSettingRadius()));
                 break;
 
             case Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE: //search by coordinate
-                httpAsyncTask.execute(String.valueOf(mParamType), mParamLatitude, mParamLongitude);
+                httpAsyncTask.execute(String.valueOf(mParamType), mParamLatitude, mParamLongitude,
+                        Parser.convertIntegerToString(getMainActivity().getSettingRadius()));
                 break;
 
             case Constant.SEARCH_HDB_NEARBY_CARPARK_USING_CURRENT_LOCATION: //search by current location
                 httpAsyncTask.execute(String.valueOf(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE),
                         Parser.convertDoubleToString(this.currentLocation.latitude),
-                        Parser.convertDoubleToString(this.currentLocation.longitude));
+                        Parser.convertDoubleToString(this.currentLocation.longitude),
+                        Parser.convertIntegerToString(getMainActivity().getSettingRadius()));
 
             case Constant.SEARCH_HDB_SPECIFIC_CARPARK_DETAIL: //search carpark detail
                 break;
@@ -440,6 +440,11 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
     private void updateMainActivityLocation(double lat, double lng){
         LatLng loc = new LatLng(lat, lng);
         getMainActivity().setCurrentLocation(loc);
+    }
+
+    private void clearGoogleMap(){
+        this.mMap.clear();
+        this.initMarkerMap();
     }
 
 
@@ -632,6 +637,7 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
                         try{
                             CarparkList mCarparkList = Parser.parseCarparkListFromJson(result);
                             Coordinate searchCoordinate = Parser.parseSearchInputFromJSON(result);
+                            clearGoogleMap();
                             setCarparkMarkerInGoogleMap(mCarparkList); //set marker for each carpark
                             setSearchInputCoordinateMarkerInGoogleMap(searchCoordinate); //set marker for search coordinate
 

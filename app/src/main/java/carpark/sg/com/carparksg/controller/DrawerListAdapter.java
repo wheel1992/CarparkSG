@@ -51,6 +51,10 @@ public class DrawerListAdapter  extends ArrayAdapter<String>{
             case 2:
                 holder.setListIcon(R.drawable.ic_list_setting);
                 break;
+
+            case 3:
+                holder.setListIcon(R.drawable.ic_list_info);
+                break;
         }
 
         return v;

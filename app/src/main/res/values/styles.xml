@@ -127,4 +127,40 @@
     </style>
 
 
+    <style name="dialogTheme" parent="Theme.AppCompat.Light.Dialog">
+        <item name="android:windowBackground">@color/white</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowCloseOnTouchOutside">false</item>
+    </style>
+
+    <style name="dialogContentTheme">
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingLeft">8dp</item>
+        <item name="android:paddingRight">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+    </style>
+
+    <style name="dialogContentTitle">
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">@dimen/text_primary</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:color">@color/primary_text</item>
+        <item name="android:layout_marginBottom">8dp</item>
+    </style>
+
+    <style name="dialogContentVersion">
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">@dimen/text_secondary</item>
+        <item name="android:color">@color/secondary_text</item>
+        <item name="android:layout_marginBottom">8dp</item>
+    </style>
+
+    <style name="dialogContentDetail">
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">@dimen/text_secondary</item>
+        <item name="android:color">@color/secondary_text</item>
+        <item name="android:layout_marginBottom">8dp</item>
+    </style>
+
+
 </resources>

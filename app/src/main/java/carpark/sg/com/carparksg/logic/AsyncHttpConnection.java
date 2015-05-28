@@ -30,10 +30,12 @@ public class AsyncHttpConnection extends AsyncTask<String, Void, String> {
             * type
             * 1 - search carpark availability using address (params[1])
             * params[1] - address
+            * params[2] - radius
             *
             * 2 - search carpark availability using coordinate (params[1])
             * params[1] - latitude
             * params[2] - longitude
+            * params[3] - radius
             *
             * 3 - search carpark detail (params[1])
             * params[1] - latitude
@@ -46,11 +48,11 @@ public class AsyncHttpConnection extends AsyncTask<String, Void, String> {
                 case 1:
                         result = searchCarparkAvailabilityByAddress(params[1]);
                         Coordinate mCoordinate = Parser.parseCoordinateFromJson(result);
-                        result = searchCarparkAvailabilityByCoordinate(mCoordinate.getLatitude(), mCoordinate.getLongitude());
+                        result = searchCarparkAvailabilityByCoordinate(mCoordinate.getLatitude(), mCoordinate.getLongitude(), params[2]);
                     break;
 
                 case 2:
-                    result = searchCarparkAvailabilityByCoordinate(params[1], params[2]);
+                    result = searchCarparkAvailabilityByCoordinate(params[1], params[2], params[3]);
                     break;
 
                 case 3:
@@ -81,13 +83,16 @@ public class AsyncHttpConnection extends AsyncTask<String, Void, String> {
         return  WebConnector.convertStreamToString(urlStream);
     }
 
-    private String searchCarparkAvailabilityByCoordinate(String lat, String lng) throws IOException{
+    private String searchCarparkAvailabilityByCoordinate(String lat, String lng, String radius) throws IOException{
         String dummyLatitude = Constant.DUMMY_LATITUDE;
         String dummyLongitude = Constant.DUMMY_LONGITUDE;
         String dummyRadius = Constant.DUMMY_RADIUS;
         urlAddress = Constant.URL_HDB_HTTP_CARPARK_AVAILABILITY_QUERY.replace(dummyLatitude, Parser.encodeURLString(lat))
                                                                     .replace(dummyLongitude, Parser.encodeURLString(lng))
-                                                                    .replace(dummyRadius, Parser.encodeURLString(Constant.RADIUS));
+                                                                    .replace(dummyRadius, Parser.encodeURLString(radius));
+
+        System.out.println("AsyncHttpConnection - URL -> " + urlAddress);
+
         urlStream = WebConnector.downloadUrl(urlAddress); //get list of carparks
         return  WebConnector.convertStreamToString(urlStream);
     }

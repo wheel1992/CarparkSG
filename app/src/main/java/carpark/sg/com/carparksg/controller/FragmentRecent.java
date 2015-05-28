@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import carpark.sg.com.carparksg.R;
+import carpark.sg.com.carparksg.logic.Parser;
 import carpark.sg.com.model.Constant;
 import carpark.sg.com.model.Favourite;
 import carpark.sg.com.model.FavouriteList;
@@ -164,8 +165,9 @@ public class FragmentRecent extends Fragment {
                 String address = getHistoryList().getList().get(position).getName();
                 String lat = getHistoryList().getList().get(position).getLatitude();
                 String lng = getHistoryList().getList().get(position).getLongitude();
+                String radius = Parser.convertIntegerToString(getMainActivity().getSettingRadius());
 
-                getMainActivity().displayFragmentSearch(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE, address, lat, lng);
+                getMainActivity().displayFragmentSearch(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE, address, lat, lng, radius);
             }
         });
     }

@@ -1,17 +1,31 @@
 package carpark.sg.com.carparksg.controller;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatDialog;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.appyvet.rangebar.RangeBar;
 
+import org.json.JSONException;
+
+import java.io.IOException;
+import java.util.HashMap;
+
 import carpark.sg.com.carparksg.R;
 import carpark.sg.com.carparksg.logic.Parser;
+import carpark.sg.com.model.EnumDialog;
+import carpark.sg.com.model.EnumSetting;
+import carpark.sg.com.model.Preferences;
 import carpark.sg.com.model.Setting;
 
 
@@ -30,11 +44,21 @@ public class FragmentSetting extends Fragment {
    // private static final String ARG_PARAM2 = "param2";
 
     private int mParamRadius;
+    private int currentSelectedRadius = 0;
 
     private OnFragmentInteractionListener mListener;
 
     private MainActivity mActivity;
     private RangeBar mRangeBar;
+    private Setting mSetting;
+    private Preferences mPref;
+
+    private RecyclerView mRecyclerView;
+    private RecyclerView.Adapter mRecyclerAdapter;
+    private RecyclerView.LayoutManager mRecyclerLayoutManager;
+
+    // Store all the setting title and value
+    private HashMap<EnumSetting, String> mSettingMap;
 
     /**
      * Use this factory method to create a new instance of
@@ -70,10 +94,14 @@ public class FragmentSetting extends Fragment {
 
         View rootView = inflater.inflate(R.layout.fragment_setting, container, false);
 
-        this.initRangeBar(rootView);
+        //this.initRangeBar(rootView);
+        this.initPreference();
+        this.initSettingMap();
+        this.initSetting();
+        this.addKeyValueToSettingMap(EnumSetting.SETTING_RADIUS, Parser.convertIntegerToString(this.mParamRadius));
 
-        float pinValue = Parser.convertIntegerToFloat(this.mParamRadius);
-        this.setRangeBarValue(pinValue);
+        this.initRecyclerView(rootView);
+        this.setRecyclerSettingView(this.mSettingMap);
 
         // Inflate the layout for this fragment
         return rootView;
@@ -107,27 +135,67 @@ public class FragmentSetting extends Fragment {
         return this.mActivity;
     }
 
-    private void initRangeBar(View v){
-        this.mRangeBar = (RangeBar) v.findViewById(R.id.rangebar);
-        this.mRangeBar.setOnRangeBarChangeListener(new RangeBar.OnRangeBarChangeListener() {
-            @Override
-            public void onRangeChangeListener(RangeBar rangeBar, int leftPinIndex,
-                                              int rightPinIndex, String leftPinValue, String rightPinValue) {
-
-                System.out.println("Fragment Setting - " + leftPinValue + " - " + rightPinValue);
-
-            }
-        });
-
+    private void initPreference(){
+        this.mPref = Preferences.getInstance(getMainActivity());
     }
 
+    private void initSettingMap(){
+        this.mSettingMap = new HashMap<EnumSetting, String>();
+    }
 
-    private void setRangeBarValue(float val){
-        this.mRangeBar.setSeekPinByValue(val);
+    private void initSetting(){
+        this.mSetting = Setting.getInstance();
+    }
+
+    private void addKeyValueToSettingMap(EnumSetting key, String value){
+        this.mSettingMap.put(key, value);
     }
 
     private void saveSetting(){
+        System.out.println("FragmentSetting - Save Setting");
+        this.getMainActivity().setSettingRadius(mParamRadius);
+        this.getMainActivity().saveSetting();
+    }
 
+    private void updateArgumentRadius(int value){
+        this.getArguments().putInt(ARG_RADIUS, value);
+    }
+
+    private void initRecyclerAdapter(HashMap<EnumSetting, String> mMap){
+        mRecyclerAdapter = new RecyclerViewSettingAdapter(getMainActivity(), mMap);
+        ((RecyclerViewSettingAdapter)mRecyclerAdapter).setOnItemClickListener(new RecyclerViewSettingAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
+                System.out.println("FragmentSetting - Click position -> " + position);
+                switch (position) {
+                    case 0:
+                        showDialog(EnumDialog.DIALOG_RADIUS);
+                        //setRangeBarValue(mParamRadius);
+                        break;
+
+                }
+            }
+        });
+    }
+
+    private void initRecyclerView(View v){
+        this.mRecyclerView = (RecyclerView) v.findViewById(R.id.recycler_view_setting);
+    }
+
+    private void setRecyclerSettingView(HashMap<EnumSetting, String> mMap){
+        this.mRecyclerLayoutManager = new LinearLayoutManager(getMainActivity());
+        this.mRecyclerView.setLayoutManager(this.mRecyclerLayoutManager);
+
+        this.initRecyclerAdapter(mMap);
+        this.mRecyclerView.setAdapter(this.mRecyclerAdapter);
+        this.mRecyclerView.addItemDecoration(new DividerItemDecoration(getMainActivity(), DividerItemDecoration.VERTICAL_LIST));
+    }
+
+    public void refreshSettingAdapter(HashMap<EnumSetting, String> mMap){
+        this.initRecyclerAdapter(mMap);
+        this.mRecyclerView.setAdapter(null);
+        this.mRecyclerView.setAdapter(this.mRecyclerAdapter);
+        //this.mRecyclerAdapter.notifyDataSetChanged();
     }
 
 
@@ -152,5 +220,71 @@ public class FragmentSetting extends Fragment {
             mListener.onFragmentSettingInteraction(uri);
         }
     }
+
+
+    /**
+     * Custom Dialogs
+     * **/
+    private void showDialog(EnumDialog dg){
+        switch (dg){
+            case DIALOG_RADIUS:
+                showDialogRadius(this.getMainActivity());
+                break;
+
+        }
+    }
+
+    private void showDialogRadius(Context context){
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        LayoutInflater inflater = this.getMainActivity().getLayoutInflater();
+
+        final View dialogView = inflater.inflate(R.layout.dialog_radius, null);
+
+        this.initRangeBar(dialogView);
+        this.setRangeBarValue(mParamRadius);
+
+        builder.setView(dialogView)
+                .setPositiveButton(R.string.dialog_set, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        int newValue = getRangeBarValue();
+                        System.out.println("FragmentSetting - range bar new value -> " + newValue);
+                        mParamRadius = newValue;
+                        updateArgumentRadius(newValue);
+                        addKeyValueToSettingMap(EnumSetting.SETTING_RADIUS, Parser.convertIntegerToString(newValue));
+                        saveSetting();
+                        refreshSettingAdapter(mSettingMap);
+                    }
+                })
+                .setNegativeButton(R.string.dialog_cancel, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.dismiss();
+                    }
+                });
+
+        builder.create().show();
+
+    }
+
+    private void initRangeBar(View v){
+        this.mRangeBar = (RangeBar) v.findViewById(R.id.rangebar_radius);
+        this.mRangeBar.setOnRangeBarChangeListener(new RangeBar.OnRangeBarChangeListener() {
+            @Override
+            public void onRangeChangeListener(RangeBar rangeBar, int leftPinIndex,
+                                              int rightPinIndex, String leftPinValue, String rightPinValue) {
+                currentSelectedRadius = Parser.convertStringToInteger(rightPinValue);
+            }
+        });
+    }
+
+    private void setRangeBarValue(int value){
+        float val = Parser.convertIntegerToFloat(value);
+        this.mRangeBar.setSeekPinByValue(val);
+    }
+
+    private int getRangeBarValue(){
+        return this.currentSelectedRadius;
+    }
+
 
 }

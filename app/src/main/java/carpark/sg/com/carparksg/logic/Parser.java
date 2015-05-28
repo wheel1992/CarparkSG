@@ -256,5 +256,14 @@ public class Parser {
         return ret.toString();
     }
 
+    public static String parseDistanceToString(int distance){
+        if(distance < 1000){
+            return distance + "m";
+        }else{
+            double d = distance / 1000;
+            return d + "km";
+        }
+    }
+
 
 }

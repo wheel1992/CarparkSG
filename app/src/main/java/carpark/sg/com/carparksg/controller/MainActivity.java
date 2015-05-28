@@ -1,6 +1,7 @@
 package carpark.sg.com.carparksg.controller;
 
 import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Handler;
@@ -11,9 +12,11 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.AppCompatDialog;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -33,6 +36,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONException;
+import org.w3c.dom.Text;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -42,8 +46,10 @@ import java.util.Collections;
 import java.util.Set;
 
 import carpark.sg.com.carparksg.R;
+import carpark.sg.com.carparksg.logic.Parser;
 import carpark.sg.com.model.Carpark;
 import carpark.sg.com.model.Constant;
+import carpark.sg.com.model.EnumSetting;
 import carpark.sg.com.model.Favourite;
 import carpark.sg.com.model.FavouriteList;
 import carpark.sg.com.model.History;
@@ -191,7 +197,8 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         //        Parser.convertDoubleToString(currentLocation.longitude));
         this.displayFragmentSearch(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_CURRENT_LOCATION, "",
                 Constant.LOCATION_LATITUDE_EXAMPLE,
-                Constant.LOCATION_LONGITUDE_EXAMPLE);
+                Constant.LOCATION_LONGITUDE_EXAMPLE,
+                Parser.convertIntegerToString(this.getSettingRadius()));
 
         super.onResume();
     }
@@ -230,21 +237,29 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         String fragName = "";
         System.out.println("position - " + position);
         switch(position){
-            case 0:
+            case 0: // favourite
                 openFragment = FragmentFavourite.newInstance("", "");
                 fragName = Constant.FRAGMENT_FAVOURITE;
                 break;
-            case 1:
+            case 1: // recent
                 openFragment = FragmentRecent.newInstance("", "");
                 fragName = Constant.FRAGMENT_RECENT;
                 break;
-            case 2:
+            case 2: // setting
                 openFragment = FragmentSetting.newInstance(this.mSetting);
                 fragName = Constant.FRAGMENT_SETTING;
                 break;
+            case 3: // about
+                // About will have a pop-up dialog instead of fragment
+                this.showDialogAbout(this);
+                break;
         }
 
-        displayFragment(openFragment, fragName);
+        // show fragment for other position except 3 (about)
+        if(position != 3){
+            displayFragment(openFragment, fragName);
+        }
+
 
     }
 
@@ -273,9 +288,9 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
     /**
      * This method will open the fragment search with map
      * **/
-    public void displayFragmentSearch(int type, String address, String lat, String lng){
+    public void displayFragmentSearch(int type, String address, String lat, String lng, String radius){
         String fragName = Constant.FRAGMENT_SEARCH_NAME;
-        this.fragmentSearch = FragmentSearch.newInstance(type, address, lat, lng);
+        this.fragmentSearch = FragmentSearch.newInstance(type, address, lat, lng, radius);
         //displayFragment(this.fragmentSearch, fragName);
         replaceFragment(this.fragmentSearch, fragName);
     }
@@ -637,6 +652,15 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         }
     }
 
+    public void setSettingRadius(int value){
+        this.mSetting.setRadius(value);
+    }
+
+    public int getSettingRadius(){
+        return this.mSetting.getRadius();
+    }
+
+
     public boolean isFavouriteExist(String id, String address, String lat, String lng){
         return this.mFavouriteList.isFavouriteExist(id, address, lat, lng);
     }
@@ -683,7 +707,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
                 initSearchAdapter();
 
                 displayFragmentSearch(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_ADDRESS, v.getText().toString(),
-                        "", "");
+                        "", "", Parser.convertIntegerToString(getSettingRadius()));
 
                 //searchCarpark(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_ADDRESS, v.getText().toString(), "", "");
                 return true;
@@ -704,7 +728,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
 
                 setToolbarSearchText(address);
                 displayFragmentSearch(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE, address,
-                                    lat, lng);
+                                    lat, lng, Parser.convertIntegerToString(getSettingRadius()));
                 //searchCarpark(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE, address, lat, lng);
 
             }
@@ -893,6 +917,39 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
 
 
 
+    /**
+     * About dialog
+     * **/
+    private void showDialogAbout(Context context){
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        LayoutInflater inflater = this.getLayoutInflater();
+
+        final View dialogView = inflater.inflate(R.layout.dialog_about, null);
+
+        this.initDialogAboutTextView(dialogView);
+
+        builder.setView(dialogView)
+                .setPositiveButton(R.string.dialog_ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.dismiss();
+                    }
+                });
+
+        builder.create().show();
+    }
+
+    private void initDialogAboutTextView(View v){
+        TextView txtTitle = (TextView) v.findViewById(R.id.text_about_title);
+        TextView txtVersion = (TextView) v.findViewById(R.id.text_about_version);
+        TextView txtDetail = (TextView) v.findViewById(R.id.text_about_detail);
+
+        txtTitle.setText(getString(R.string.about_title));
+        txtVersion.setText(getString(R.string.about_version));
+        txtDetail.setText(getString(R.string.about_detail));
+
+
+    }
 
 
 /*
