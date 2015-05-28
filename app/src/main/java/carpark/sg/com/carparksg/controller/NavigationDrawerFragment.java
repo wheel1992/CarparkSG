@@ -28,6 +28,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 
 import carpark.sg.com.carparksg.R;
+import carpark.sg.com.model.Constant;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
@@ -68,6 +69,8 @@ public class NavigationDrawerFragment extends Fragment {
     private boolean mFromSavedInstanceState;
     private boolean mUserLearnedDrawer;
 
+    private View.OnClickListener mOriginalListener;
+
 
     public NavigationDrawerFragment() {
     }
@@ -78,7 +81,7 @@ public class NavigationDrawerFragment extends Fragment {
 
         // Read in the flag indicating whether or not the user has demonstrated awareness of the
         // drawer. See PREF_USER_LEARNED_DRAWER for details.
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getMainActivity());
         mUserLearnedDrawer = sp.getBoolean(PREF_USER_LEARNED_DRAWER, false);
 
         if (savedInstanceState != null) {
@@ -122,7 +125,7 @@ public class NavigationDrawerFragment extends Fragment {
      * @param drawerLayout The DrawerLayout containing this fragment's UI.
      */
     public void setUp(int fragmentId, DrawerLayout drawerLayout) {
-        mFragmentContainerView = getActivity().findViewById(fragmentId);
+        mFragmentContainerView = getMainActivity().findViewById(fragmentId);
         mDrawerLayout = drawerLayout;
 
         // set a custom shadow that overlays the main content when the drawer opens
@@ -136,7 +139,7 @@ public class NavigationDrawerFragment extends Fragment {
         // ActionBarDrawerToggle ties together the the proper interactions
         // between the navigation drawer and the action bar app icon.
         mDrawerToggle = new ActionBarDrawerToggle(
-                getActivity(),                    /* host Activity */
+                getMainActivity(),                    /* host Activity */
                 mDrawerLayout,                    /* DrawerLayout object */
                 R.string.navigation_drawer_open,  /* "open drawer" description for accessibility */
                 R.string.navigation_drawer_close  /* "close drawer" description for accessibility */
@@ -149,7 +152,7 @@ public class NavigationDrawerFragment extends Fragment {
                     return;
                 }
 
-                getActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+                getMainActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
             }
 
             @Override
@@ -168,7 +171,7 @@ public class NavigationDrawerFragment extends Fragment {
                     sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).apply();
                 }
 
-                getActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+                getMainActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
             }
         };
 
@@ -187,6 +190,16 @@ public class NavigationDrawerFragment extends Fragment {
         });
 
         mDrawerLayout.setDrawerListener(mDrawerToggle);
+
+        this.mOriginalListener = mDrawerToggle.getToolbarNavigationClickListener();
+    }
+
+    public ActionBarDrawerToggle getDrawerToggle(){
+        return this.mDrawerToggle;
+    }
+
+    public View.OnClickListener getOriginalToolbarNavigationClickListener(){
+        return this.mOriginalListener;
     }
 
     private void initList(View v){
@@ -217,16 +230,16 @@ public class NavigationDrawerFragment extends Fragment {
     private void initListName(){
         if(this.mDrawerListName == null){
             this.mDrawerListName = new ArrayList<String>();
-            this.mDrawerListName.add(getString(R.string.title_fragment_favorite));
-            this.mDrawerListName.add(getString(R.string.title_fragment_recent));
-            this.mDrawerListName.add(getString(R.string.title_fragment_setting));
-            this.mDrawerListName.add(getString(R.string.title_fragment_about));
+            this.mDrawerListName.add(Constant.FRAGMENT_FAVOURITE_TITLE);
+            this.mDrawerListName.add(Constant.FRAGMENT_RECENT_TITLE);
+            this.mDrawerListName.add(Constant.FRAGMENT_SETTING_TITLE);
+            this.mDrawerListName.add(Constant.FRAGMENT_ABOUT_TITLE);
         }
     }
 
     private void initDrawerListAdapter(){
         if(this.mDrawerListAdapter == null){
-            this.mDrawerListAdapter = new DrawerListAdapter(getActivity().getBaseContext(), R.layout.drawer_list_row_layout, this.mDrawerListName);
+            this.mDrawerListAdapter = new DrawerListAdapter(getMainActivity().getBaseContext(), R.layout.drawer_list_row_layout, this.mDrawerListName);
         }
     }
 
@@ -291,20 +304,54 @@ public class NavigationDrawerFragment extends Fragment {
         super.onCreateOptionsMenu(menu, inflater);
     }
 
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (mDrawerToggle.onOptionsItemSelected(item)) {
+            System.out.println("NavigationDrawerFragment - mDrawerToggle onOptionsItemSelected");
             return true;
         }
 
-        /*
-        if (item.getItemId() == R.id.action_example) {
-            Toast.makeText(getActivity(), "Example action.", Toast.LENGTH_SHORT).show();
-            return true;
+        System.out.println("NavigationDrawerFragment - no mDrawerToggle onOptionsItemSelected");
+
+        switch(item.getItemId()){
+            case android.R.id.home:
+                System.out.println("NavigationDrawerFragment - home is clicked");
+                // fragment popbackstack when back arrow exist
+                getMainActivity().removeFragmentFromBackStack();
+
+                if(getMainActivity().hasReachedFirstPage()){
+                    getMainActivity().toggleDisplayToolbarLogo(true); //show logo
+                    getMainActivity().toggleDisplayToolbarTitle(false); //hide title
+                    if(getMainActivity().hasRadiusChanged()){
+                        getMainActivity().showSnackBar();
+                    }
+
+                }else{
+                    getMainActivity().toggleDisplayToolbarLogo(false); //hide logo
+                    getMainActivity().toggleDisplayToolbarTitle(true); //show title
+                    getMainActivity().setToolbarTitleBasedOnPopBackStackResult(); //display title based on last fragment
+                }
+
+
+                return true;
         }
-        */
+
+        //if (item.getItemId() == R.id.action_example) {
+        //    Toast.makeText(getActivity(), "Example action.", Toast.LENGTH_SHORT).show();
+        //   return true;
+        //}
+
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public MainActivity getMainActivity(){
+        if(getActivity() instanceof MainActivity){
+            return (MainActivity) getActivity();
+        }else{
+            return null;
+        }
     }
 
     /**
@@ -313,13 +360,13 @@ public class NavigationDrawerFragment extends Fragment {
      */
     private void showGlobalContextActionBar() {
         ActionBar actionBar = getActionBar();
-        actionBar.setDisplayShowTitleEnabled(false);
+        //actionBar.setDisplayShowTitleEnabled(false);
         //actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
         //actionBar.setTitle(R.string.app_name);
     }
 
     private ActionBar getActionBar() {
-        return ((AppCompatActivity) getActivity()).getSupportActionBar();
+        return getMainActivity().getSupportActionBar();
     }
 
     /**

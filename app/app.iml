@@ -107,6 +107,7 @@
     <orderEntry type="library" exported="" name="play-services-gcm-7.3.0" level="project" />
     <orderEntry type="library" exported="" name="play-services-nearby-7.3.0" level="project" />
     <orderEntry type="library" exported="" name="support-v4-22.1.1" level="project" />
+    <orderEntry type="library" exported="" name="snackbar-2.10.9" level="project" />
     <orderEntry type="library" exported="" name="play-services-fitness-7.3.0" level="project" />
     <orderEntry type="library" exported="" name="gridlayout-v7-22.1.1" level="project" />
     <orderEntry type="library" exported="" name="play-services-plus-7.3.0" level="project" />

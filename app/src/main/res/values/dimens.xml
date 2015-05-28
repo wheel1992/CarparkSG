@@ -14,6 +14,8 @@
     <dimen name="recyclerview_list_row_text_padding_top">20dp</dimen>
     <dimen name="recyclerview_list_row_text_padding_bottom">20dp</dimen>
 
+    <dimen name="text_actionbar_title">18sp</dimen>
+
     <dimen name="text_primary">16sp</dimen>
     <dimen name="text_secondary">14sp</dimen>
     <dimen name="text_caption">12sp</dimen>

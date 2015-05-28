@@ -37,10 +37,18 @@ public class Constant {
 
     // Fragment names to add back stack
     public static final String FRAGMENT_SEARCH_NAME = "FragmentSearch";
-    public static final String FRAGMENT_FAVOURITE = "FragmentFavourite";
-    public static final String FRAGMENT_RECENT = "FragmentRecent";
-    public static final String FRAGMENT_SETTING = "FragmentSetting";
+    public static final String FRAGMENT_FAVOURITE_NAME = "FragmentFavourite";
+    public static final String FRAGMENT_RECENT_NAME = "FragmentRecent";
+    public static final String FRAGMENT_SETTING_NAME = "FragmentSetting";
     public static final String FRAGMENT_CARPARK_DETAIL_NAME = "FragmentCarparkDetail";
+
+    //Fragment title
+    public static final String FRAGMENT_FAVOURITE_TITLE = "Favourite";
+    public static final String FRAGMENT_RECENT_TITLE = "Recent";
+    public static final String FRAGMENT_SETTING_TITLE = "Setting";
+    public static final String FRAGMENT_CARPARK_DETAIL_TITLE = "Detail";
+    public static final String FRAGMENT_ABOUT_TITLE = "About";
+
 
 
     //Fragment Carpark Detail
@@ -70,7 +78,12 @@ public class Constant {
     public static final String SETTING_FILE_NAME = "setting.txt";
 
     //Error messages
-    public static final String ERROR_NO_FAVOURITE = "No favourite found.";
-    public static final String ERROR_NO_RECENT = "No recent search found.";
+    public static final String ERROR_NO_FAVOURITE = "You do not have any favourite carpark(s).";
+    public static final String ERROR_NO_RECENT = "You do not have any recent search.";
 
+    //Snackbar messages
+    public static final String SNACK_BAR_RADIUS_CHANGED = "Range has changed.";
+
+    //Snackbar action text
+    public static final String SNACK_BAR_ACTION_REFRESH_MAP = "Refresh Map";
 }

@@ -12,10 +12,12 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.StreetViewPanorama;
@@ -81,6 +83,7 @@ public class FragmentCarparkDetail extends Fragment {
     private MainActivity mActivity;
     private CardView cvTop;
     private CardView cvAvailableLot;
+    private CardView cvDetail;
     private TextView txtTitle;
     private TextView txtSubTitle;
     private TextView txtAvailableLot;
@@ -90,6 +93,7 @@ public class FragmentCarparkDetail extends Fragment {
     private Button btnRefresh;
     private ProgressDialog prog;
 
+    private LinearLayout mParentLayout;
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mRecyclerAdapter;
     private RecyclerView.LayoutManager mRecyclerLayoutManager;
@@ -171,6 +175,7 @@ public class FragmentCarparkDetail extends Fragment {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_carpark_detail, container, false);
 
+        this.initDetailLayout(rootView);
         this.initFavouriteList();
         //this.initStreetViewPanorama(rootView);
         //this.setStreetViewPanorama(this.mParamLatitude, this.mParamLongitude);
@@ -211,6 +216,10 @@ public class FragmentCarparkDetail extends Fragment {
             this.setButtonFavouriteText(getMainActivity().getResources().getString(R.string.button_text_favourite));
         }
 
+        getMainActivity().toggleDisplayToolbarLogo(false);
+        getMainActivity().toggleDisplayToolbarTitle(true);
+        getMainActivity().setToolbarTitle(Constant.FRAGMENT_CARPARK_DETAIL_TITLE);
+
         return rootView;
     }
 
@@ -219,6 +228,7 @@ public class FragmentCarparkDetail extends Fragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        System.out.println("FragmentCarparkDetail - onAttach");
         this.initMainActivity((MainActivity) activity);
         try {
             mListener = (OnFragmentInteractionListener) activity;
@@ -258,12 +268,28 @@ public class FragmentCarparkDetail extends Fragment {
         }
     }
 
+    private View.OnTouchListener mViewOnTouchListener = new View.OnTouchListener(){
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            if(v.getId() != R.id.search_auto_complete_text){
+                getMainActivity().hideSearchTextAndKeyboard();
+                return true;
+            }
+            return false;
+        }
+    };
+
     private void initMainActivity(MainActivity activity){
         this.mActivity = activity;
     }
 
     private MainActivity getMainActivity(){
         return this.mActivity;
+    }
+
+    private void initDetailLayout(View v){
+        this.mParentLayout = (LinearLayout) v.findViewById(R.id.layout_parent_detail);
+        this.mParentLayout.setOnTouchListener(this.mViewOnTouchListener);
     }
 
     private void initFavouriteList(){
@@ -302,6 +328,7 @@ public class FragmentCarparkDetail extends Fragment {
     private void initViews(View v){
         this.cvTop = (CardView) v.findViewById(R.id.card_view_top);
         this.cvAvailableLot = (CardView) v.findViewById(R.id.card_view_lot);
+        this.cvDetail = (CardView) v.findViewById(R.id.card_view_detail);
         this.txtTitle = (TextView) v.findViewById(R.id.text_title);
         this.txtSubTitle = (TextView) v.findViewById(R.id.text_subtitle);
         this.txtAvailableLot = (TextView) v.findViewById(R.id.text_available_lot);
@@ -316,6 +343,12 @@ public class FragmentCarparkDetail extends Fragment {
         this.setButtonOnClick(btnFavourite);
         this.setButtonOnClick(btnRefresh);
         this.setImageOnClick(imgStreetView);
+
+        this.cvTop.setOnTouchListener(this.mViewOnTouchListener);
+        this.cvAvailableLot.setOnTouchListener(this.mViewOnTouchListener);
+        this.cvDetail.setOnTouchListener(this.mViewOnTouchListener);
+
+        this.mRecyclerView.setOnTouchListener(this.mViewOnTouchListener);
     }
 
     private void setCardViewAvailableLot(int value){
@@ -406,6 +439,8 @@ public class FragmentCarparkDetail extends Fragment {
                             break;
 
                     }
+
+                    getMainActivity().hideSearchTextAndKeyboard();
                 }
             });
         }
@@ -416,7 +451,6 @@ public class FragmentCarparkDetail extends Fragment {
             ((ImageView) mView).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-
                     switch(v.getId()){
                         case R.id.image_street_view:
                             String url = Constant.URL_GOOGLE_MAP_STREET_VIEW_QUERY;
@@ -427,6 +461,8 @@ public class FragmentCarparkDetail extends Fragment {
 
                             break;
                     }
+
+                    getMainActivity().hideSearchTextAndKeyboard();
                 }
             });
         }

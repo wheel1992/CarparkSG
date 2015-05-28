@@ -30,4 +30,5 @@ dependencies {
     compile 'com.android.support:palette-v7:22.1.1'
     compile 'com.google.android.gms:play-services:7.3.0'
     compile 'com.appyvet:materialrangebar:1.0'
+    compile 'com.nispok:snackbar:2.10.+'
 }

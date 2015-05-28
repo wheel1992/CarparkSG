@@ -1,15 +1,23 @@
 package carpark.sg.com.carparksg.controller;
 
 import android.app.Activity;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import com.nispok.snackbar.Snackbar;
+import com.nispok.snackbar.SnackbarManager;
+import com.nispok.snackbar.enums.SnackbarType;
+import com.nispok.snackbar.listeners.ActionClickListener;
 
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +56,7 @@ public class FragmentRecent extends Fragment {
     private TextView txtError;
     private HistoryList mHistoryList;
 
+    private LinearLayout mParentLayout;
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mRecyclerAdapter;
     private RecyclerView.LayoutManager mRecyclerLayoutManager;
@@ -90,22 +99,22 @@ public class FragmentRecent extends Fragment {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_recent, container, false);
 
+        this.initRecentLayout(rootView);
         this.initHistoryList();
         this.initRecyclerView(rootView);
-        this.initTextError(rootView);
-
 
         int historySize = this.getHistoryListSize();
         if(historySize > 0){
             this.setRecyclerRecentView(this.mHistoryList.getList());
             this.showRecyclerRecentView();
-            this.hideTextError();
-
         }else{
             this.hideRecyclerRecentView();
-            this.showTextError(Constant.ERROR_NO_RECENT);
+            this.showSnackBarMessage(Constant.ERROR_NO_RECENT);
         }
 
+        getMainActivity().toggleDisplayToolbarLogo(false);
+        getMainActivity().toggleDisplayToolbarTitle(true);
+        getMainActivity().setToolbarTitle(Constant.FRAGMENT_RECENT_TITLE);
 
         return rootView;
     }
@@ -130,6 +139,16 @@ public class FragmentRecent extends Fragment {
         mListener = null;
     }
 
+    private View.OnTouchListener mViewOnTouchListener = new View.OnTouchListener(){
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            if(v.getId() != R.id.search_auto_complete_text){
+                getMainActivity().hideSearchTextAndKeyboard();
+                return true;
+            }
+            return false;
+        }
+    };
 
     public void refreshRecentAdapter(){
         this.initRecyclerAdapter(this.mHistoryList.getList());
@@ -147,6 +166,11 @@ public class FragmentRecent extends Fragment {
 
     private MainActivity getMainActivity(){
         return this.mActivity;
+    }
+
+    private void initRecentLayout(View v){
+        this.mParentLayout = (LinearLayout) v.findViewById(R.id.layout_parent_recent);
+        this.mParentLayout.setOnTouchListener(this.mViewOnTouchListener);
     }
 
     private void initHistoryList(){
@@ -174,6 +198,7 @@ public class FragmentRecent extends Fragment {
 
     private void initRecyclerView(View v){
         this.mRecyclerView = (RecyclerView) v.findViewById(R.id.recycler_view_recent);
+        this.mRecyclerView.setOnTouchListener(this.mViewOnTouchListener);
     }
 
     private void setRecyclerRecentView(List<History> mList){
@@ -192,19 +217,15 @@ public class FragmentRecent extends Fragment {
         this.mRecyclerView.setVisibility(View.GONE);
     }
 
-    private void initTextError(View v){
-        this.txtError = (TextView) v.findViewById(R.id.text_recent_error);
+    private void showSnackBarMessage(String message){
+        Snackbar mSnackBar = Snackbar.with(getMainActivity())
+                .type(SnackbarType.MULTI_LINE)
+                .text(message)
+                .duration(Snackbar.SnackbarDuration.LENGTH_LONG);
+
+        SnackbarManager.show(mSnackBar, getMainActivity());
     }
 
-    private void showTextError(String error){
-        this.txtError.setVisibility(View.VISIBLE);
-        this.txtError.setText(error);
-    }
-
-    private void hideTextError(){
-        this.txtError.setVisibility(View.GONE);
-        this.txtError.setText("");
-    }
 
 
     /**

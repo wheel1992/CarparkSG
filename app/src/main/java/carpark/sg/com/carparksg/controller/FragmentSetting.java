@@ -11,8 +11,10 @@ import android.support.v7.app.AppCompatDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 import com.appyvet.rangebar.RangeBar;
 
@@ -23,6 +25,7 @@ import java.util.HashMap;
 
 import carpark.sg.com.carparksg.R;
 import carpark.sg.com.carparksg.logic.Parser;
+import carpark.sg.com.model.Constant;
 import carpark.sg.com.model.EnumDialog;
 import carpark.sg.com.model.EnumSetting;
 import carpark.sg.com.model.Preferences;
@@ -45,6 +48,9 @@ public class FragmentSetting extends Fragment {
 
     private int mParamRadius;
     private int currentSelectedRadius = 0;
+    private int oldRadius = 0;
+
+    private boolean hasRadiusChange = false;
 
     private OnFragmentInteractionListener mListener;
 
@@ -53,6 +59,7 @@ public class FragmentSetting extends Fragment {
     private Setting mSetting;
     private Preferences mPref;
 
+    private LinearLayout mParentLayout;
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mRecyclerAdapter;
     private RecyclerView.LayoutManager mRecyclerLayoutManager;
@@ -84,7 +91,8 @@ public class FragmentSetting extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParamRadius = getArguments().getInt(ARG_RADIUS);
+            this.mParamRadius = getArguments().getInt(ARG_RADIUS);
+            this.oldRadius = this.mParamRadius;
         }
     }
 
@@ -95,6 +103,7 @@ public class FragmentSetting extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_setting, container, false);
 
         //this.initRangeBar(rootView);
+        this.initSettingLayout(rootView);
         this.initPreference();
         this.initSettingMap();
         this.initSetting();
@@ -103,11 +112,13 @@ public class FragmentSetting extends Fragment {
         this.initRecyclerView(rootView);
         this.setRecyclerSettingView(this.mSettingMap);
 
+        getMainActivity().toggleDisplayToolbarLogo(false);
+        getMainActivity().toggleDisplayToolbarTitle(true);
+        getMainActivity().setToolbarTitle(Constant.FRAGMENT_SETTING_TITLE);
+
         // Inflate the layout for this fragment
         return rootView;
     }
-
-
 
     @Override
     public void onAttach(Activity activity) {
@@ -127,12 +138,29 @@ public class FragmentSetting extends Fragment {
         mListener = null;
     }
 
+    private View.OnTouchListener mViewOnTouchListener = new View.OnTouchListener(){
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            if(v.getId() != R.id.search_auto_complete_text){
+                getMainActivity().hideSearchTextAndKeyboard();
+                return true;
+            }
+            return false;
+        }
+    };
+
     private void initMainActivity(MainActivity activity){
         this.mActivity = activity;
     }
 
     private MainActivity getMainActivity(){
         return this.mActivity;
+    }
+
+    private void initSettingLayout(View v){
+        this.mParentLayout = (LinearLayout) v.findViewById(R.id.layout_parent_setting);
+        //this.mParentLayout.setOnClickListener(this.mViewOnClickListener);
+        this.mParentLayout.setOnTouchListener(this.mViewOnTouchListener);
     }
 
     private void initPreference(){
@@ -170,6 +198,7 @@ public class FragmentSetting extends Fragment {
                 switch (position) {
                     case 0:
                         showDialog(EnumDialog.DIALOG_RADIUS);
+                        getMainActivity().hideSearchTextAndKeyboard();
                         //setRangeBarValue(mParamRadius);
                         break;
 
@@ -180,6 +209,8 @@ public class FragmentSetting extends Fragment {
 
     private void initRecyclerView(View v){
         this.mRecyclerView = (RecyclerView) v.findViewById(R.id.recycler_view_setting);
+        //this.mRecyclerView.setOnClickListener(this.mViewOnClickListener);
+        this.mRecyclerView.setOnTouchListener(this.mViewOnTouchListener);
     }
 
     private void setRecyclerSettingView(HashMap<EnumSetting, String> mMap){
@@ -197,30 +228,6 @@ public class FragmentSetting extends Fragment {
         this.mRecyclerView.setAdapter(this.mRecyclerAdapter);
         //this.mRecyclerAdapter.notifyDataSetChanged();
     }
-
-
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        public void onFragmentSettingInteraction(Uri uri);
-    }
-
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentSettingInteraction(uri);
-        }
-    }
-
 
     /**
      * Custom Dialogs
@@ -249,11 +256,23 @@ public class FragmentSetting extends Fragment {
                     public void onClick(DialogInterface dialog, int id) {
                         int newValue = getRangeBarValue();
                         System.out.println("FragmentSetting - range bar new value -> " + newValue);
-                        mParamRadius = newValue;
-                        updateArgumentRadius(newValue);
-                        addKeyValueToSettingMap(EnumSetting.SETTING_RADIUS, Parser.convertIntegerToString(newValue));
-                        saveSetting();
-                        refreshSettingAdapter(mSettingMap);
+
+                        if (newValue != oldRadius) {
+                            mParamRadius = newValue;
+                            oldRadius = newValue;
+                            updateArgumentRadius(newValue);
+                            addKeyValueToSettingMap(EnumSetting.SETTING_RADIUS, Parser.convertIntegerToString(newValue));
+                            saveSetting();
+                            refreshSettingAdapter(mSettingMap);
+
+                            hasRadiusChange = true;
+
+                        } else {
+                            hasRadiusChange = false;
+                        }
+
+                        mListener.onFragmentSettingInteraction(hasRadiusChange);
+
                     }
                 })
                 .setNegativeButton(R.string.dialog_cancel, new DialogInterface.OnClickListener() {
@@ -284,6 +303,29 @@ public class FragmentSetting extends Fragment {
 
     private int getRangeBarValue(){
         return this.currentSelectedRadius;
+    }
+
+
+
+    /**
+     * This interface must be implemented by activities that contain this
+     * fragment to allow an interaction in this fragment to be communicated
+     * to the activity and potentially other fragments contained in that
+     * activity.
+     * <p/>
+     * See the Android Training lesson <a href=
+     * "http://developer.android.com/training/basics/fragments/communicating.html"
+     * >Communicating with Other Fragments</a> for more information.
+     */
+    public interface OnFragmentInteractionListener {
+        // TODO: Update argument type and name
+        public void onFragmentSettingInteraction(boolean isRadiusChanged);
+    }
+
+    public void onButtonPressed(boolean val) {
+        if (mListener != null) {
+            mListener.onFragmentSettingInteraction(val);
+        }
     }
 
 

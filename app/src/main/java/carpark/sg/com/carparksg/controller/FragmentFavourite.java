@@ -8,11 +8,16 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.nispok.snackbar.Snackbar;
+import com.nispok.snackbar.SnackbarManager;
+import com.nispok.snackbar.enums.SnackbarType;
 
 import java.util.HashMap;
 
@@ -52,6 +57,7 @@ public class FragmentFavourite extends Fragment {
     private FavouriteList mFavouriteList;
     private HashMap<String, Favourite> mFavouriteMap;
 
+    private LinearLayout mParentLayout;
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mRecyclerAdapter;
     private RecyclerView.LayoutManager mRecyclerLayoutManager;
@@ -93,9 +99,9 @@ public class FragmentFavourite extends Fragment {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_favourite, container, false);
 
+        this.initFavouriteLayout(rootView);
         this.initFavouriteList();
         this.initRecyclerView(rootView);
-        this.initTextError(rootView);
         int size = this.getFavouriteListSize();
 
         if(size > 0){
@@ -103,14 +109,15 @@ public class FragmentFavourite extends Fragment {
             this.mFavouriteMap = this.getFavouriteMap();
             this.setRecyclerFavouriteView(this.mFavouriteMap);
             this.showRecyclerFavouriteView();
-            this.hideTextError();
         }else{
             Log.d(LOG_TAG, "history(s) are not available.");
             this.hideRecyclerFavouriteView();
-            this.showTextError(Constant.ERROR_NO_FAVOURITE);
+            this.showSnackBarMessage(Constant.ERROR_NO_FAVOURITE);
         }
 
-        // Activity has already gotten favourite from the favourite file in internal storage
+        getMainActivity().toggleDisplayToolbarLogo(false);
+        getMainActivity().toggleDisplayToolbarTitle(true);
+        getMainActivity().setToolbarTitle(Constant.FRAGMENT_FAVOURITE_TITLE);
 
         return rootView;
     }
@@ -136,12 +143,28 @@ public class FragmentFavourite extends Fragment {
         mListener = null;
     }
 
+    private View.OnTouchListener mViewOnTouchListener = new View.OnTouchListener(){
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            if(v.getId() != R.id.search_auto_complete_text){
+                getMainActivity().hideSearchTextAndKeyboard();
+                return true;
+            }
+            return false;
+        }
+    };
+
     private void initMainActivity(MainActivity activity){
         this.mActivity = activity;
     }
 
     private MainActivity getMainActivity(){
         return this.mActivity;
+    }
+
+    private void initFavouriteLayout(View v){
+        this.mParentLayout = (LinearLayout) v.findViewById(R.id.layout_parent_favourite);
+        this.mParentLayout.setOnTouchListener(this.mViewOnTouchListener);
     }
 
     private void initFavouriteList(){
@@ -191,6 +214,7 @@ public class FragmentFavourite extends Fragment {
 
     private void initRecyclerView(View v){
         this.mRecyclerView = (RecyclerView) v.findViewById(R.id.recycler_view_favourite);
+        this.mRecyclerView.setOnTouchListener(this.mViewOnTouchListener);
     }
 
     private void setRecyclerFavouriteView(HashMap<String, Favourite> mMap){
@@ -210,19 +234,6 @@ public class FragmentFavourite extends Fragment {
         this.mRecyclerView.setVisibility(View.GONE);
     }
 
-    private void initTextError(View v){
-        this.txtError = (TextView) v.findViewById(R.id.text_favourite_error);
-    }
-
-    private void showTextError(String error){
-        this.txtError.setVisibility(View.VISIBLE);
-        this.txtError.setText(error);
-    }
-
-    private void hideTextError(){
-        this.txtError.setVisibility(View.GONE);
-        this.txtError.setText("");
-    }
 
     public void refreshFavouriteAdapter(){
         this.initRecyclerAdapter(this.mFavouriteMap);
@@ -233,6 +244,16 @@ public class FragmentFavourite extends Fragment {
     public FavouriteList getFavouriteList(){
         return this.mFavouriteList;
     }
+
+    private void showSnackBarMessage(String message){
+        Snackbar mSnackBar = Snackbar.with(getMainActivity())
+                .type(SnackbarType.MULTI_LINE)
+                .text(message)
+                .duration(Snackbar.SnackbarDuration.LENGTH_LONG);
+
+        SnackbarManager.show(mSnackBar, getMainActivity());
+    }
+
 
     /**
      * This interface must be implemented by activities that contain this

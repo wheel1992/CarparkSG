@@ -20,6 +20,7 @@ import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -33,6 +34,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -153,6 +155,7 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
         MapsInitializer.initialize(this.getMainActivity());
         this.mMapView = (MapView) rootView.findViewById(R.id.map);
         this.mMapView.onCreate(mBundleMap);
+        this.mMapView.setOnTouchListener(this.mViewOnTouchListener);
         this.initGoogleMap(rootView);
         this.initMarkerMap();
 
@@ -276,7 +279,6 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
                 System.out.println("FragmentSearch - onConnected handleCurrentLocation");
                 LatLng loc = new LatLng(location.getLatitude(), location.getLongitude());
                 this.handleCurrentLocation(loc);
-                //this.running();
             }
         }
 
@@ -353,15 +355,7 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
         this.mMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
             @Override
             public boolean onMyLocationButtonClick() {
-                Location currentLocation = mMap.getMyLocation();
-                if (currentLocation == null || !isLocationServiceOn()) {
-                    showAlertDialog(ALERT_DIALOG_TYPE_GPS);
-                }else{
-                    LatLng loc = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-                    //set the type of search to use current location
-                    mParamType = Constant.SEARCH_HDB_NEARBY_CARPARK_USING_CURRENT_LOCATION;
-                    handleCurrentLocation(loc);
-                }
+                run();
                 return true;
             }
         });
@@ -372,6 +366,7 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
                     mMap.animateCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
                     marker.showInfoWindow();
                 }
+                getMainActivity().hideSearchTextAndKeyboard();
                 return true;
             }
         });
@@ -381,11 +376,42 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
                 Carpark cp = markerMap.searchCarpark(marker);
                 FragmentCarparkDetail openFrag = FragmentCarparkDetail.newInstance(currentLocation, marker.getPosition(), cp);
                 getMainActivity().displayFragment(openFrag, Constant.FRAGMENT_CARPARK_DETAIL_NAME);
+                getMainActivity().hideSearchTextAndKeyboard();
             }
         });
+
+        this.mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                getMainActivity().hideSearchTextAndKeyboard();
+            }
+        });
+
+        this.mMap.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
+            @Override
+            public void onCameraChange(CameraPosition cameraPosition) {
+                getMainActivity().hideSearchTextAndKeyboard();
+            }
+        });
+
+
     }
 
-    private void running(){
+    public void run(){
+        Location currentLocation = mMap.getMyLocation();
+        if (currentLocation == null || !isLocationServiceOn()) {
+            showAlertDialog(ALERT_DIALOG_TYPE_GPS);
+        } else {
+            LatLng loc = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+            //set the type of search to use current location
+            mParamType = Constant.SEARCH_HDB_NEARBY_CARPARK_USING_CURRENT_LOCATION;
+            handleCurrentLocation(loc);
+        }
+
+        getMainActivity().hideSearchTextAndKeyboard();
+    }
+
+    private void startAsyncTask(){
         // execute asynctask
         httpAsyncTask = new httpConnectionAsyncTask(mParamType);
         switch(mParamType){
@@ -414,7 +440,7 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
         if(location != null){
             this.currentLocation = new LatLng(location.latitude, location.longitude);
             this.updateMainActivityLocation(location.latitude, location.longitude);
-            this.running();
+            this.startAsyncTask();
         }
         //this.setCurrentLocationMarkerInGoogleMap(location);
     }
@@ -423,7 +449,7 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
         this.currentLocation = new LatLng(Parser.convertStringToDouble(Constant.LOCATION_LATITUDE_EXAMPLE),
                                     Parser.convertStringToDouble(Constant.LOCATION_LONGITUDE_EXAMPLE));
         this.updateMainActivityLocation(currentLocation.latitude, currentLocation.longitude);
-        this.running();
+        this.startAsyncTask();
     }
 
 
@@ -606,6 +632,18 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
         getMainActivity().refreshSearchAdapter();
     }
 
+
+
+    private View.OnTouchListener mViewOnTouchListener = new View.OnTouchListener(){
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            if(v.getId() != R.id.search_auto_complete_text){
+                getMainActivity().hideSearchTextAndKeyboard();
+                return true;
+            }
+            return false;
+        }
+    };
 
     private class httpConnectionAsyncTask extends AsyncHttpConnection{
         private int queryType;
