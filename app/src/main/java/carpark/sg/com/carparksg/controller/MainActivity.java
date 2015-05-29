@@ -353,7 +353,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
             this.fragmentTransaction = fragmentManager.beginTransaction();
             this.fragmentTransaction
                     .replace(R.id.container, newFrag, name)
-                    .commit();
+                    .commitAllowingStateLoss();
         }
     }
 
