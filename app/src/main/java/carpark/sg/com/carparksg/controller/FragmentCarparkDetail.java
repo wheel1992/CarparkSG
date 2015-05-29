@@ -58,9 +58,9 @@ public class FragmentCarparkDetail extends Fragment {
     private static final String ARG_CURRENT_USER_LATITUDE = "currentUserLatitude";
     private static final String ARG_IS_FAVOURITE = "isFavourite";
 
-
-    //private static FragmentCarparkDetail fragmentCarparkDetail = new FragmentCarparkDetail();
     private static FragmentCarparkDetail fragmentCarparkDetail;
+
+    private final String TAG_FRAGMENT_CARPARK_DETAIL = this.getClass().getSimpleName();
 
     private Carpark mParamCarpark;
     private String mParamLatitude;
@@ -113,11 +113,8 @@ public class FragmentCarparkDetail extends Fragment {
      */
     // TODO: Rename and change types and number of parameters
     public static FragmentCarparkDetail newInstance(LatLng currentPosition, LatLng position, Carpark cp) {
-        //if(!isInstanceCreated()){
-        initFragmentCarparkDetail();
-        //}else{
 
-        //}
+        initFragmentCarparkDetail();
 
         Bundle args = new Bundle();
         args.putSerializable(ARG_CARPARK, cp);
@@ -153,6 +150,7 @@ public class FragmentCarparkDetail extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getMainActivity().printLogDebug(TAG_FRAGMENT_CARPARK_DETAIL, "onCreate");
         if (getArguments() != null) {
             this.mParamCarpark = (Carpark) getArguments().getSerializable(ARG_CARPARK);
             this.mParamLatitude = getArguments().getString(ARG_LATITUDE);
@@ -172,6 +170,7 @@ public class FragmentCarparkDetail extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        getMainActivity().printLogDebug(TAG_FRAGMENT_CARPARK_DETAIL, "onCreateView");
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_carpark_detail, container, false);
 
@@ -219,7 +218,7 @@ public class FragmentCarparkDetail extends Fragment {
         getMainActivity().toggleDisplayToolbarLogo(false);
         getMainActivity().toggleDisplayToolbarTitle(true);
         getMainActivity().setToolbarTitle(Constant.FRAGMENT_CARPARK_DETAIL_TITLE);
-
+        getMainActivity().hideActionMenuItemRefresh();
         return rootView;
     }
 
@@ -228,8 +227,9 @@ public class FragmentCarparkDetail extends Fragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        System.out.println("FragmentCarparkDetail - onAttach");
         this.initMainActivity((MainActivity) activity);
+        getMainActivity().printLogDebug(TAG_FRAGMENT_CARPARK_DETAIL, "onAttach");
+
         try {
             mListener = (OnFragmentInteractionListener) activity;
         } catch (ClassCastException e) {
@@ -241,30 +241,34 @@ public class FragmentCarparkDetail extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
+        getMainActivity().printLogDebug(TAG_FRAGMENT_CARPARK_DETAIL, "onDetach");
         mListener = null;
     }
 
     @Override
     public void onResume(){
         super.onResume();
+        getMainActivity().printLogDebug(TAG_FRAGMENT_CARPARK_DETAIL, "onResume");
         if(this.mStreetView != null){
             this.mStreetView.onResume();
         }
     }
 
     @Override
-    public void onDestroy(){
-        super.onDestroy();
+    public void onPause(){
+        super.onPause();
+        getMainActivity().printLogDebug(TAG_FRAGMENT_CARPARK_DETAIL, "onPause");
         if(this.mStreetView != null){
-            this.mStreetView.onDestroy();
+            this.mStreetView.onPause();
         }
     }
 
     @Override
-    public void onPause(){
+    public void onDestroy(){
         super.onDestroy();
+        getMainActivity().printLogDebug(TAG_FRAGMENT_CARPARK_DETAIL, "onDestroy");
         if(this.mStreetView != null){
-            this.mStreetView.onPause();
+            this.mStreetView.onDestroy();
         }
     }
 
@@ -496,15 +500,14 @@ public class FragmentCarparkDetail extends Fragment {
     }
 
     private boolean markAsFavourite(){
-        //Log.d()
-        System.out.println("adding this carpark to favourite");
+        getMainActivity().printLogDebug(TAG_FRAGMENT_CARPARK_DETAIL, "Mark as favourite");
         this.getMainActivity().addNewFavourite(this.mParamCarparkNumber, this.mParamCarparkAddress, this.mParamLatitude, this.mParamLongitude,
                                             this.mParamCarparkNeighbourhood, this.mParamCarparkAvailableLot, this.mParamIsFavourite);
         return this.getMainActivity().saveFavouriteList();
     }
 
     private boolean markAsUnfavourite(){
-        //Log.d()
+        getMainActivity().printLogDebug(TAG_FRAGMENT_CARPARK_DETAIL, "Mark as unfavourite");
         this.getMainActivity().removeFavourite(this.mParamCarparkNumber, this.mParamCarparkAddress, this.mParamLatitude, this.mParamLongitude,
                                             this.mParamCarparkNeighbourhood, this.mParamCarparkAvailableLot, this.mParamIsFavourite);
         return this.getMainActivity().saveFavouriteList();
@@ -512,6 +515,7 @@ public class FragmentCarparkDetail extends Fragment {
 
 
     private void refreshAvailableLot(){
+        getMainActivity().printLogDebug(TAG_FRAGMENT_CARPARK_DETAIL, "Refresh carpark available lot");
         initAsyncTask(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE);
         // get carpark availability lot
         httpAsyncTask.execute(String.valueOf(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE), mParamLatitude, mParamLongitude,

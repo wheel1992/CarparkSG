@@ -41,8 +41,9 @@ import carpark.sg.com.model.Setting;
  * create an instance of this fragment.
  */
 public class FragmentSetting extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+
+    private final String TAG_FRAGMENT_SETTING = this.getClass().getSimpleName();
+
     private static final String ARG_RADIUS = "radius";
    // private static final String ARG_PARAM2 = "param2";
 
@@ -90,6 +91,7 @@ public class FragmentSetting extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getMainActivity().printLogDebug(TAG_FRAGMENT_SETTING, "onCreate");
         if (getArguments() != null) {
             this.mParamRadius = getArguments().getInt(ARG_RADIUS);
             this.oldRadius = this.mParamRadius;
@@ -99,6 +101,7 @@ public class FragmentSetting extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        getMainActivity().printLogDebug(TAG_FRAGMENT_SETTING, "onCreateView");
 
         View rootView = inflater.inflate(R.layout.fragment_setting, container, false);
 
@@ -115,6 +118,7 @@ public class FragmentSetting extends Fragment {
         getMainActivity().toggleDisplayToolbarLogo(false);
         getMainActivity().toggleDisplayToolbarTitle(true);
         getMainActivity().setToolbarTitle(Constant.FRAGMENT_SETTING_TITLE);
+        getMainActivity().hideActionMenuItemRefresh();
 
         // Inflate the layout for this fragment
         return rootView;
@@ -124,6 +128,8 @@ public class FragmentSetting extends Fragment {
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         this.initMainActivity((MainActivity) activity);
+        getMainActivity().printLogDebug(TAG_FRAGMENT_SETTING, "onAttach");
+
         try {
             mListener = (OnFragmentInteractionListener) activity;
         } catch (ClassCastException e) {
@@ -135,6 +141,7 @@ public class FragmentSetting extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
+        getMainActivity().printLogDebug(TAG_FRAGMENT_SETTING, "onDetach");
         mListener = null;
     }
 
@@ -180,7 +187,7 @@ public class FragmentSetting extends Fragment {
     }
 
     private void saveSetting(){
-        System.out.println("FragmentSetting - Save Setting");
+        getMainActivity().printLogDebug(TAG_FRAGMENT_SETTING, "Save Setting");
         this.getMainActivity().setSettingRadius(mParamRadius);
         this.getMainActivity().saveSetting();
     }
@@ -255,9 +262,10 @@ public class FragmentSetting extends Fragment {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
                         int newValue = getRangeBarValue();
-                        System.out.println("FragmentSetting - range bar new value -> " + newValue);
 
                         if (newValue != oldRadius) {
+                            getMainActivity().printLogDebug(TAG_FRAGMENT_SETTING, "New range value -> " + newValue);
+
                             mParamRadius = newValue;
                             oldRadius = newValue;
                             updateArgumentRadius(newValue);

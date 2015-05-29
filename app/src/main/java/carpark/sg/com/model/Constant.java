@@ -34,8 +34,10 @@ public class Constant {
 
     // AlertDialog
     public static final String ALERT_DIALOG_GPS_DSIABLED_MESSAGE = "Your GPS seems to be disabled, would you like to enable it?";
+    public static final String ALERT_DIALOG_NETWORK_DiSABLED_MESSAGE = "Your internet seems to be disabled.";
 
     // Fragment names to add back stack
+    public static final String FRAGMENT_NO_INTERNET = "FragmentNoInternet";
     public static final String FRAGMENT_SEARCH_NAME = "FragmentSearch";
     public static final String FRAGMENT_FAVOURITE_NAME = "FragmentFavourite";
     public static final String FRAGMENT_RECENT_NAME = "FragmentRecent";

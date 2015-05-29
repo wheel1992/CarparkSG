@@ -43,6 +43,7 @@ import org.json.JSONException;
 
 import carpark.sg.com.carparksg.R;
 import carpark.sg.com.carparksg.logic.AsyncHttpConnection;
+import carpark.sg.com.carparksg.logic.CustomLogging;
 import carpark.sg.com.carparksg.logic.Parser;
 import carpark.sg.com.model.Carpark;
 import carpark.sg.com.model.CarparkList;
@@ -79,6 +80,8 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
     private static final int ALERT_DIALOG_TYPE_GPS = 1;
     private static final int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 
+    private final String TAG_FRAGMENT_SEARCH = this.getClass().getSimpleName();
+
     // TODO: Rename and change types of parameters
     private int mParamType;
     private String mParamAddress;
@@ -110,6 +113,9 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
     private static FragmentSearch mFragmentSearch = new FragmentSearch();
     private httpConnectionAsyncTask httpAsyncTask;
 
+    //Logging
+    private CustomLogging mLogging;
+
     public static FragmentSearch newInstance(int type, String paramAddress, String paramLat, String paramLong, String paramRadius) {
         //if(mFragmentSearch == null){
             mFragmentSearch = new FragmentSearch();
@@ -131,7 +137,7 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        System.out.println("FragmentSearch - onCreate");
+        this.printLogDebug(TAG_FRAGMENT_SEARCH, "onCreate");
         if (getArguments() != null) {
             mParamType = getArguments().getInt(ARG_PARAM_TYPE_OF_SEARCH);
             mParamAddress = getArguments().getString(ARG_PARAM_ADDRESS);
@@ -145,8 +151,7 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-        System.out.println("FragmentSearch - onCreateView");
-        //Log.i(this.getMainActivity().getClass().getSimpleName(), "Fragment onCreateView");
+        this.printLogDebug(TAG_FRAGMENT_SEARCH, "onCreateView");
 
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_search, container, false);
@@ -171,12 +176,6 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
                                 .setFastestInterval(1 * 1000)
                                 .setNumUpdates(1);
 
-        //let's assume currentlocation is based on default location
-        //this.currentLocation = new LatLng(Parser.convertStringToDouble(this.mParamLatitude),
-        //                              Parser.convertStringToDouble(this.mParamLongitude));
-
-        //System.out.println("FragmentSearch - old current location -> " + currentLocation.latitude + ", " + currentLocation.longitude);
-
         return rootView;
     }
 
@@ -186,11 +185,11 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
 
     }
 
-
     @Override
     public void onResume(){
         super.onResume();
-        System.out.println("FragmentSearch - onResume");
+        this.printLogDebug(TAG_FRAGMENT_SEARCH, "onResume");
+
         if(mMapView != null){
             mMapView.onResume();
         }
@@ -198,15 +197,12 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
         this.mGoogleApiClient.connect();
 
         if(!isLocationServiceOn()){
+            this.printLogError(TAG_FRAGMENT_SEARCH, "Location service is off");
             initAlertDialog();
             showAlertDialog(this.ALERT_DIALOG_TYPE_GPS);
-            System.out.println("FragmentSearch - show alert dialog");
-            //update paramter lat and long
-            //this.updateLocationArgument(Parser.convertDoubleToString(this.currentLocation.latitude),
-            //        Parser.convertDoubleToString(this.currentLocation.longitude));
             this.handleDefaultLocation();
         }else{
-            System.out.println("FragmentSearch - alert dialog is not shown because location service is on");
+            this.printLogDebug(TAG_FRAGMENT_SEARCH, "Location service is on");
         }
 
     }
@@ -214,7 +210,7 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
     @Override
     public void onPause(){
         super.onPause();
-        System.out.println("FragmentSearch - onPause");
+        this.printLogDebug(TAG_FRAGMENT_SEARCH, "onPause");
 
         if(mGoogleApiClient.isConnected()){
             this.stopLocationUpdates();
@@ -227,7 +223,8 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
     @Override
     public void onDestroy(){
         super.onDestroy();
-        System.out.println("FragmentSearch - onDestroy");
+        this.printLogDebug(TAG_FRAGMENT_SEARCH, "onDestroy");
+
         if(mMapView != null){
             mMapView.onDestroy();
         }
@@ -236,6 +233,7 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
     @Override
     public void onLowMemory(){
         super.onLowMemory();
+        this.printLogDebug(TAG_FRAGMENT_SEARCH, "onLowMemory");
         if(mMapView != null){
             mMapView.onLowMemory();
         }
@@ -245,9 +243,11 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        this.initMainActivity((MainActivity) activity);
 
-        Log.i(this.mActivity.getClass().getSimpleName(), "Fragment onAttach");
+        this.initLogging();
+        this.printLogDebug(TAG_FRAGMENT_SEARCH, "onAttach");
+
+        this.initMainActivity((MainActivity) activity);
 
         try {
             mListener = (OnFragmentInteractionListener) activity;
@@ -260,23 +260,21 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
     @Override
     public void onDetach() {
         super.onDetach();
+        this.printLogDebug(TAG_FRAGMENT_SEARCH, "onDetach");
         mListener = null;
     }
 
     @Override
     public void onConnected(Bundle bundle){
+        this.printLogDebug(TAG_FRAGMENT_SEARCH, "Location services connected");
 
-        //Log.i(this.getMainActivity().getClass().getSimpleName(), "Location services connected.");
-        System.out.println("FragmentSearch - Location services connected");
         Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         if(this.isLocationServiceOn()){ // check if location service is on
             if(location == null){
-                System.out.println("FragmentSearch - onConnected requestLocationUpdates");
+                this.printLogDebug(TAG_FRAGMENT_SEARCH, "requestLocationUpdates");
                 this.startLocationUpdates();
-                //LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
-                //this.handleDefaultLocation();
             }else{
-                System.out.println("FragmentSearch - onConnected handleCurrentLocation");
+                this.printLogDebug(TAG_FRAGMENT_SEARCH, "handleCurrentLocation");
                 LatLng loc = new LatLng(location.getLatitude(), location.getLongitude());
                 this.handleCurrentLocation(loc);
             }
@@ -286,8 +284,7 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
 
     @Override
     public void onConnectionSuspended(int i){
-        //Log.i(this.getMainActivity().getClass().getSimpleName(), "Location services suspended. Please reconnect.");
-        System.out.println("FragmentSearch - Location services suspended. Please reconnect");
+        this.printLogDebug(TAG_FRAGMENT_SEARCH, "Location services suspended.");
     }
 
     @Override
@@ -299,27 +296,24 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
                 e.printStackTrace();
             }
         }else{
-            //Log.i(this.getMainActivity().getClass().getSimpleName(), "Location services connection failed with code " + connectionResult.getErrorCode());
-            System.out.println("FragmentSearch - Location services connection failed with code " + connectionResult.getErrorCode());
+
+            this.printLogError(TAG_FRAGMENT_SEARCH, "Location services connection failed with code " + connectionResult.getErrorCode());
             this.handleDefaultLocation();
         }
     }
 
     @Override
     public void onLocationChanged(Location location) {
-        System.out.println("FragmentSearch - onLocationChanged -> " + location.getLatitude() + ", " + location.getLongitude());
         LatLng loc = new LatLng(location.getLatitude(), location.getLongitude());
         this.handleCurrentLocation(loc);
     }
 
     private void startLocationUpdates() {
-        System.out.println("MainActivity - Start location updates");
         LocationServices.FusedLocationApi.requestLocationUpdates(
                 mGoogleApiClient, mLocationRequest, this);
     }
 
     private void stopLocationUpdates() {
-        System.out.println("MainActivity - Stop location updates");
         LocationServices.FusedLocationApi.removeLocationUpdates(
                 mGoogleApiClient, this);
     }
@@ -335,10 +329,8 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
 
     private void initGoogleMap(View v){
         if(this.mMap == null){
-            System.out.println("mMap is null");
             this.mMap = this.mMapView.getMap();
             if(this.mMap != null){
-                System.out.println("mMap is not null, configure map");
                 configureGoogleMap();
             }
         }
@@ -375,7 +367,8 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
             public void onInfoWindowClick(Marker marker) {
                 Carpark cp = markerMap.searchCarpark(marker);
                 FragmentCarparkDetail openFrag = FragmentCarparkDetail.newInstance(currentLocation, marker.getPosition(), cp);
-                getMainActivity().displayFragment(openFrag, Constant.FRAGMENT_CARPARK_DETAIL_NAME);
+                getMainActivity().displayFragmentCarparkDetail(currentLocation, marker.getPosition(), cp);
+                //getMainActivity().displayFragment(openFrag, Constant.FRAGMENT_CARPARK_DETAIL_NAME);
                 getMainActivity().hideSearchTextAndKeyboard();
             }
         });
@@ -456,10 +449,10 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
     private boolean isLocationServiceOn(){
         LocationManager manager = (LocationManager) this.getMainActivity().getSystemService(Context.LOCATION_SERVICE);
         if(!manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
-            System.out.println("FragmentSearch - Location service is off");
+            this.printLogDebug(TAG_FRAGMENT_SEARCH, "Location service is off.");
             return false;
         }
-        System.out.println("FragmentSearch - Location service is on");
+        this.printLogDebug(TAG_FRAGMENT_SEARCH, "Location service is on.");
         return true;
     }
 
@@ -486,12 +479,9 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
             lat = cp.getLatitude();
             lng = cp.getLongitude();
 
-            //coordinate = new LatLng(Double.parseDouble(lat), Double.parseDouble(lng));
-            //marker = new MarkerOptions().position(coordinate);
             markerOption = this.setMarkerOption(cp.getAvailableLot(), lat, lng);
             markerOption.title(cp.getAddress());
             mMarker = this.mMap.addMarker(markerOption);
-            //mMarker = getMap().addMarker(markerOption);
             mMarker.setAnchor(0.5f, 1);
 
             addElementToMarkerMap(mMarker, cp);
@@ -626,7 +616,7 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
     }
 
     private void updateHistory(String address, Coordinate point){
-        System.out.println("FragmentSearch - Updating History");
+        this.printLogDebug(TAG_FRAGMENT_SEARCH, "Updating History.");
         getMainActivity().addNewHistory(address, point.getLatitude(), point.getLongitude());
         getMainActivity().saveHistoryList();
         getMainActivity().refreshSearchAdapter();
@@ -723,6 +713,18 @@ public class FragmentSearch extends Fragment implements GoogleApiClient.Connecti
         return false;
     }
 
+
+    private void initLogging(){
+        this.mLogging = CustomLogging.getInstance();
+    }
+
+    private void printLogDebug(String tag, String msg){
+        this.mLogging.debug(tag, msg);
+    }
+
+    private void printLogError(String tag, String msg){
+        this.mLogging.error(tag, msg);
+    }
 
 
 }

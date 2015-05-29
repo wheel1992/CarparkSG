@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/white"
+    style="@style/dialogTheme">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_gravity="center"
+        android:gravity="center_vertical"
+        style="@style/dialogContentTheme">
+
+        <ImageView
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:layout_gravity="center"
+            android:src="@drawable/no_internet_logo"/>
+
+        <TextView
+            android:id="@+id/text_no_internet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/dialogContentDetail" />
+        
+        <Button
+            android:id="@+id/btnTapRetry"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/button_text_tap_retry"
+            style="@style/AppCompat.Button.Flat.Grey"/>
+
+    </LinearLayout>
+
+</LinearLayout>

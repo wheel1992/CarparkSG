@@ -40,7 +40,7 @@ import carpark.sg.com.model.FavouriteList;
 public class FragmentFavourite extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private final String LOG_TAG = "Fragment Favourite";
+    private final String TAG_FRAGMENT_FAVOURITE = this.getClass().getSimpleName();
 
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
@@ -87,6 +87,7 @@ public class FragmentFavourite extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getMainActivity().printLogDebug(TAG_FRAGMENT_FAVOURITE, "onCreate");
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
@@ -96,6 +97,7 @@ public class FragmentFavourite extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        getMainActivity().printLogDebug(TAG_FRAGMENT_FAVOURITE, "onCreateView");
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_favourite, container, false);
 
@@ -105,12 +107,12 @@ public class FragmentFavourite extends Fragment {
         int size = this.getFavouriteListSize();
 
         if(size > 0){
-            Log.d(LOG_TAG, "history(s) are available.");
+            getMainActivity().printLogDebug(TAG_FRAGMENT_FAVOURITE, "history(s) are available.");
             this.mFavouriteMap = this.getFavouriteMap();
             this.setRecyclerFavouriteView(this.mFavouriteMap);
             this.showRecyclerFavouriteView();
         }else{
-            Log.d(LOG_TAG, "history(s) are not available.");
+            getMainActivity().printLogDebug(TAG_FRAGMENT_FAVOURITE, "history(s) are not available.");
             this.hideRecyclerFavouriteView();
             this.showSnackBarMessage(Constant.ERROR_NO_FAVOURITE);
         }
@@ -118,6 +120,7 @@ public class FragmentFavourite extends Fragment {
         getMainActivity().toggleDisplayToolbarLogo(false);
         getMainActivity().toggleDisplayToolbarTitle(true);
         getMainActivity().setToolbarTitle(Constant.FRAGMENT_FAVOURITE_TITLE);
+        getMainActivity().hideActionMenuItemRefresh();
 
         return rootView;
     }
@@ -128,6 +131,7 @@ public class FragmentFavourite extends Fragment {
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         this.initMainActivity((MainActivity) activity);
+        getMainActivity().printLogDebug(TAG_FRAGMENT_FAVOURITE, "onAttach");
 
         try {
             mListener = (OnFragmentInteractionListener) activity;
@@ -140,6 +144,7 @@ public class FragmentFavourite extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
+        getMainActivity().printLogDebug(TAG_FRAGMENT_FAVOURITE, "onDetach");
         mListener = null;
     }
 

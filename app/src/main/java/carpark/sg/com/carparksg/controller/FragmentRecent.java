@@ -40,9 +40,8 @@ import carpark.sg.com.model.HistoryList;
  * create an instance of this fragment.
  */
 public class FragmentRecent extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private final String LOG_TAG = "Fragment Recent log";
+
+    private final String TAG_FRAGMENT_RECENT = this.getClass().getSimpleName();
 
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
@@ -87,6 +86,7 @@ public class FragmentRecent extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getMainActivity().printLogDebug(TAG_FRAGMENT_RECENT, "onCreate");
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
@@ -96,6 +96,7 @@ public class FragmentRecent extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        getMainActivity().printLogDebug(TAG_FRAGMENT_RECENT, "onCreateView");
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_recent, container, false);
 
@@ -115,6 +116,7 @@ public class FragmentRecent extends Fragment {
         getMainActivity().toggleDisplayToolbarLogo(false);
         getMainActivity().toggleDisplayToolbarTitle(true);
         getMainActivity().setToolbarTitle(Constant.FRAGMENT_RECENT_TITLE);
+        getMainActivity().hideActionMenuItemRefresh();
 
         return rootView;
     }
@@ -124,9 +126,10 @@ public class FragmentRecent extends Fragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
+        this.initMainActivity((MainActivity) activity);
+        getMainActivity().printLogDebug(TAG_FRAGMENT_RECENT, "onAttach");
         try {
             mListener = (OnFragmentInteractionListener) activity;
-            this.initMainActivity((MainActivity)activity);
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString()
                     + " must implement OnFragmentInteractionListener");
@@ -136,6 +139,7 @@ public class FragmentRecent extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
+        getMainActivity().printLogDebug(TAG_FRAGMENT_RECENT, "onDetach");
         mListener = null;
     }
 

@@ -33,7 +33,6 @@
             android:layout_height="35dip"
             android:layout_gravity="left|center_vertical"/>
 
-
         <LinearLayout
             android:id="@+id/search_container"
             android:layout_width="match_parent"
@@ -41,24 +40,6 @@
             android:gravity="center_vertical"
             android:orientation="horizontal" >
 
-            <!--
-            <EditText
-                android:id="@+id/search_view"
-                android:layout_width="0dp"
-                android:layout_height="?attr/actionBarSize"
-                android:layout_weight="1"
-                android:background="@android:color/transparent"
-                android:gravity="center_vertical"
-                android:hint="Search"
-                android:imeOptions="actionSearch"
-                android:inputType="text"
-                android:maxLines="1"
-                android:paddingLeft="2dp"
-                android:singleLine="true"
-                android:textColor="#ffffff"
-                android:textColorHint="#b3ffffff" />
-              -->
-            
             <AutoCompleteTextView
                 android:id="@+id/search_auto_complete_text"
                 android:layout_width="0dp"

@@ -321,6 +321,7 @@ public class NavigationDrawerFragment extends Fragment {
                 getMainActivity().removeFragmentFromBackStack();
 
                 if(getMainActivity().hasReachedFirstPage()){
+                    getMainActivity().showActionMenuItemRefresh();
                     getMainActivity().toggleDisplayToolbarLogo(true); //show logo
                     getMainActivity().toggleDisplayToolbarTitle(false); //hide title
                     if(getMainActivity().hasRadiusChanged()){

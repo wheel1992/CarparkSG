@@ -16,6 +16,7 @@
 
     <string name="action_example">Example action</string>
 
+    <string name="action_refresh">Refresh</string>
     <string name="action_settings">Settings</string>
     <string name="action_search">Search</string>
 
@@ -30,6 +31,7 @@
     <string name="button_text_favourite">Favourite</string>
     <string name="button_text_unfavourite">Unfavourite</string>
     <string name="button_text_refresh">Refresh</string>
+    <string name="button_text_tap_retry">Tap to Retry</string>
 
     <string name="dialog_set">Set</string>
     <string name="dialog_cancel">Cancel</string>

@@ -2,11 +2,15 @@ package carpark.sg.com.carparksg.controller;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.content.Context;
@@ -27,6 +31,7 @@ import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -42,10 +47,9 @@ import org.json.JSONException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collections;
 
 import carpark.sg.com.carparksg.R;
+import carpark.sg.com.carparksg.logic.CustomLogging;
 import carpark.sg.com.carparksg.logic.Parser;
 import carpark.sg.com.model.Carpark;
 import carpark.sg.com.model.Constant;
@@ -53,6 +57,7 @@ import carpark.sg.com.model.Favourite;
 import carpark.sg.com.model.FavouriteList;
 import carpark.sg.com.model.History;
 import carpark.sg.com.model.HistoryList;
+import carpark.sg.com.model.InternetVariableClass;
 import carpark.sg.com.model.Preferences;
 import carpark.sg.com.model.Setting;
 
@@ -75,21 +80,20 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
     private ImageView toolbarSearchClear;
     private ImageView toolbarLogo;
     private TextView toolbarTitle;
-    private AlertDialog.Builder mAlertDialog;
+    private CustomLogging mLogging;
+    private AlertDialog mAlertDialogNoInternet;
 
     private HistoryList mHistoryList;
     private FavouriteList mFavouriteList;
     private Preferences mPreferences;
     private Setting mSetting;
     private SearchDropDownAdapter mSearchAdapter;
-    private boolean searchDropDownListShown;
 
     private Menu mMenu;
+    private MenuItem mMenuItemRefresh;
     private InputMethodManager imm;
 
-    private final String TAG_GEOCODE_IO_EXCEPTION = "Geocoder IO Exception";
-    private final int ALERT_DIALOG_TYPE_GPS = 1;
-    private final int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
+    private final String TAG_MAIN_ACTIVITY = this.getClass().getSimpleName();
 
     private FragmentManager fragmentManager;
     private FragmentTransaction fragmentTransaction;
@@ -108,11 +112,12 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
     private boolean mHasRadiusChanged = false;
 
     private boolean exit = false;
+    private boolean hasAlertDialogShown = false;
+    private InternetVariableClass mInternetVar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        System.out.println("MainActivity - onCreate");
 
 
         //When call this, it will also call navigation drawer fragment onCreate
@@ -124,6 +129,9 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         //this.toggleDisplayToolbarTitle(false);
         //mToolBar.setTitle("testing toolbar");
         //this.setToolbarTitle("testing");
+        this.initLogging();
+        this.mLogging.debug(this.TAG_MAIN_ACTIVITY, "onCreate");
+
         this.initToolbarLogo();
         this.initToolbarTitle();
 
@@ -151,6 +159,9 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         // Keyboard
         this.initKeyboard();
 
+        // Alert Dialog No Internet Connection
+        this.initAlertDialogNoInternet();
+
         this.mNavigationDrawerFragment = (NavigationDrawerFragment)
                 getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
         this.mTitle = getTitle();
@@ -172,35 +183,32 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
     @Override
     public void onStart(){
         super.onStart();
-        System.out.println("MainActivity - onStart");
+        this.mLogging.debug(this.TAG_MAIN_ACTIVITY, "onStart");
     }
 
     @Override
     public void onResume(){
-        System.out.println("MainActivity - onResume");
-        this.displayFragmentSearch(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_CURRENT_LOCATION, "",
-                Constant.LOCATION_LATITUDE_EXAMPLE,
-                Constant.LOCATION_LONGITUDE_EXAMPLE,
-                Parser.convertIntegerToString(this.getSettingRadius()));
+        this.mLogging.debug(this.TAG_MAIN_ACTIVITY, "onResume");
+        this.getFragmentSearchReady();
         super.onResume();
     }
 
     @Override
     public void onPause(){
-        System.out.println("MainActivity - onPause");
+        this.mLogging.debug(this.TAG_MAIN_ACTIVITY, "onPause");
         this.clearHistoryList();
         super.onPause();
     }
 
     @Override
     public void onStop(){
-        System.out.println("MainActivity - onStop");
+        this.mLogging.debug(this.TAG_MAIN_ACTIVITY, "onStop");
         super.onStop();
     }
 
     @Override
     public void onDestroy() {
-        System.out.println("MainActivity - onDestroy");
+        this.mLogging.debug(this.TAG_MAIN_ACTIVITY, "onResume");
         super.onDestroy();
     }
 
@@ -209,7 +217,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         // update the main content by replacing fragments
         Fragment openFragment = null;
         String fragName = "";
-        System.out.println("position - " + position);
+
         switch(position){
             case 0: // favourite
                 openFragment = FragmentFavourite.newInstance("", "");
@@ -233,8 +241,13 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         if(position != 3){
             displayFragment(openFragment, fragName);
         }
+    }
 
-
+    public void getFragmentSearchReady(){
+        this.displayFragmentSearch(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_CURRENT_LOCATION, "",
+                Constant.LOCATION_LATITUDE_EXAMPLE,
+                Constant.LOCATION_LONGITUDE_EXAMPLE,
+                Parser.convertIntegerToString(this.getSettingRadius()));
     }
 
     public void initNavigationDrawerToggle(){
@@ -251,12 +264,6 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
             public void onBackStackChanged() {
                 if (fragmentManager.getBackStackEntryCount() > 0) {
                     mNavigationDrawerToggle.setDrawerIndicatorEnabled(false);
-                    //mNavigationDrawerToggle.setToolbarNavigationClickListener(new View.OnClickListener(){
-                    //    @Override
-                    //    public void onClick(View v) {
-                    //        System.out.println("MainActivity - toolbar navigation click");
-                    //    }
-                    //});
                 } else {
                     mNavigationDrawerToggle.setDrawerIndicatorEnabled(true);
                     mNavigationDrawerToggle.setToolbarNavigationClickListener(mNavigationDrawerFragment.getOriginalToolbarNavigationClickListener());
@@ -265,22 +272,53 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         });
     }
 
+
     /**
      * This method will open the fragment search with map
      * **/
     public void displayFragmentSearch(int type, String address, String lat, String lng, String radius){
-        String fragName = Constant.FRAGMENT_SEARCH_NAME;
-        this.fragmentSearch = FragmentSearch.newInstance(type, address, lat, lng, radius);
-        this.replaceFragment(this.fragmentSearch, fragName);
+        if(this.hasNetworkConnection()){
+            mLogging.debug(this.TAG_MAIN_ACTIVITY, "Network connection is enabled.");
+
+            if(this.getHasAlertDialogNoInternetShown()){ //dialog is shown
+                this.hideAlertDialogNoNetworkConnection(); //hide
+            }
+
+            String fragName = Constant.FRAGMENT_SEARCH_NAME;
+            this.fragmentSearch = FragmentSearch.newInstance(type, address, lat, lng, radius);
+            this.replaceFragment(this.fragmentSearch, fragName);
+
+        }else{
+            mLogging.error(this.TAG_MAIN_ACTIVITY, "Network connection is disabled.");
+
+            if(!this.getHasAlertDialogNoInternetShown()){ //dialog is not shown yet
+                this.showAlertDialogNoNetworkConnection(); //show the dialog
+            }
+        }
+
     }
 
     public void displayFragmentCarparkDetail(LatLng currentPosition, LatLng cpPosition, Carpark cp){
-        this.fragmentCarparkDetail = FragmentCarparkDetail.newInstance(currentPosition, cpPosition, cp);
-        this.displayFragment(this.fragmentCarparkDetail, Constant.FRAGMENT_CARPARK_DETAIL_NAME);
+
+        if(this.hasNetworkConnection()){
+            if(this.getHasAlertDialogNoInternetShown()){ //dialog is shown
+                this.hideAlertDialogNoNetworkConnection(); //hide
+            }
+
+            this.fragmentCarparkDetail = FragmentCarparkDetail.newInstance(currentPosition, cpPosition, cp);
+            this.displayFragment(this.fragmentCarparkDetail, Constant.FRAGMENT_CARPARK_DETAIL_NAME);
+
+        }else{
+            if(!this.getHasAlertDialogNoInternetShown()){ //dialog is not shown yet
+                this.showAlertDialogNoNetworkConnection(); //show the dialog
+            }
+
+        }
+
+
     }
 
     public void displayFragment(Fragment newFrag, String name){
-        //System.out.println("MainActivity - displaying a fragment..." + name);
         if(newFrag != null){
             if(fragmentManager == null){
                 this.initFragmentManager();
@@ -291,7 +329,6 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
             // remove the fragment from manager first if found
             Fragment searchFrag = fragmentManager.findFragmentByTag(name);
             if(searchFrag != null){
-                //System.out.println("MainActivity - removing similar fragment..." + searchFrag.getTag());
                 this.removeFragment(searchFrag);
             }
 
@@ -312,7 +349,6 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
     }
 
     public void replaceFragment(Fragment newFrag, String name){
-        //System.out.println("MainActivity - Replace without adding to backstack fragment..." + name);
         if(newFrag != null){
             this.fragmentTransaction = fragmentManager.beginTransaction();
             this.fragmentTransaction
@@ -327,7 +363,6 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
     }
 
     public boolean hasReachedFirstPage(){
-        //System.out.println("MainActivity - hasReachedFirstPage -> this.fragmentManager.getBackStackEntryCount() -> " + this.fragmentManager.getBackStackEntryCount());
         if(this.fragmentManager.getBackStackEntryCount() == 0){
             return true;
         }else{
@@ -354,24 +389,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         }
     }
 
-    /*
-    public void onSectionAttached(int number) {
-        switch (number) {
-            case 1:
-                mTitle = getString(R.string.title_fragment_favorite);
-                break;
-            case 2:
-                mTitle = getString(R.string.title_fragment_recent);
-                break;
-            case 3:
-                mTitle = getString(R.string.title_fragment_setting);
-                break;
-        }
-    }
-*/
-
     public void restoreActionBar() {
-        //this.toggleDisplayToolbarTitle(false);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -399,7 +417,6 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
     }
 
     public void toggleDisplayToolbarTitle(boolean visible){
-        //getSupportActionBar().setDisplayShowTitleEnabled(visible);
         if(visible){
             this.toolbarTitle.setVisibility(View.VISIBLE);
         }else{
@@ -408,21 +425,20 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
     }
 
     public void setToolbarTitle(String title){
-        //toggleDisplayToolbarTitle(true);
-        //getSupportActionBar().setTitle(title);
-        //this.setTitle(title);
         this.toolbarTitle.setText(title);
-
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        this.mLogging.debug(TAG_MAIN_ACTIVITY, "onCreateOptionsMenu");
+        getMenuInflater().inflate(R.menu.main, menu);
+        this.mMenu = menu;
+        this.initActionMenuItemRefresh(menu.findItem(R.id.action_refresh));
 
         if (!mNavigationDrawerFragment.isDrawerOpen()) {
             // Only show items in the action bar relevant to this screen
             // if the drawer is not showing. Otherwise, let the drawer
             // decide what to show in the action bar.
-            getMenuInflater().inflate(R.menu.main, menu);
             restoreActionBar();
             toggleDisplaySearchView(false, menu.findItem(R.id.action_search));
 
@@ -435,8 +451,6 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
                 this.setToolbarTitleBasedOnPopBackStackResult(); //display title based on last fragment
             }
 
-            this.mMenu = menu;
-            return true;
         }
 
         return super.onCreateOptionsMenu(menu);
@@ -450,8 +464,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         int id = item.getItemId();
 
         if (id == R.id.action_settings) {
-            this.closeKeyboard(null); //close keyboard
-            this.hideSearchView(); //hide the autocomplete search text
+            this.hideSearchTextAndKeyboard();
 
             Fragment openFragment = FragmentSetting.newInstance(this.mSetting);
             String fragName = Constant.FRAGMENT_SETTING_NAME;
@@ -469,14 +482,16 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
 
 
         }else if(id == android.R.id.home){ //it is the back arrow
-            //System.out.println("MainActivity - activity onOptionsItemSelected");
             if(this.mMenu != null){
                 this.hideSearchView();
             }
 
-            //toggleDisplayToolbarLogo(true);
-            closeKeyboard(this.toolbarSearchText);
+            this.hideSearchTextAndKeyboard();
 
+        }else if(id == R.id.action_refresh){
+            this.initActionMenuItemRefresh(item);
+            this.getFragmentSearchReady();
+            this.hideSearchTextAndKeyboard();
         }
 
         return super.onOptionsItemSelected(item);
@@ -485,12 +500,16 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
 
     @Override
     public void onBackPressed() {
-        //Log.d(this.getClass().getName(), "onBackPressed - back button pressed");
-        System.out.println("MainActivity - back button pressed");
+        if(this.getHasAlertDialogNoInternetShown()){
+           this.hideAlertDialogNoNetworkConnection();
+        }
+
+
         if(this.fragmentManager.getBackStackEntryCount() > 0){
             this.removeFragmentFromBackStack();
 
             if(this.hasReachedFirstPage()){
+                this.showActionMenuItemRefresh();
                 this.toggleDisplayToolbarLogo(true); //show logo
                 this.toggleDisplayToolbarTitle(false); //hide title
                 if(this.hasRadiusChanged()){
@@ -520,6 +539,32 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         }
 
     }
+
+    private void initActionMenuItemRefresh(MenuItem item){
+        if(this.mMenuItemRefresh == null) {
+            this.mMenuItemRefresh = item;
+        }
+    }
+
+    private void initActionMenuItemRefresh2(){
+        if(this.mMenuItemRefresh == null) {
+            if(this.mMenu != null){
+                this.mMenuItemRefresh = this.mMenu.findItem(R.id.action_refresh);
+            }
+        }
+    }
+
+    public void showActionMenuItemRefresh(){
+        this.initActionMenuItemRefresh2();
+        this.mMenuItemRefresh.setVisible(true);
+    }
+
+    public void hideActionMenuItemRefresh(){
+        this.initActionMenuItemRefresh2();
+        this.mMenuItemRefresh.setVisible(false);
+    }
+
+
 
     public void initPreferences(){
         if(this.mPreferences == null){
@@ -566,7 +611,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         // get history list from json string
         try{
             String historyJson = this.mPreferences.getHistory();
-            System.out.println("MainActivity - JSON string from Preferences - " + historyJson);
+            this.mLogging.debug(this.TAG_MAIN_ACTIVITY, "JSON string from Preferences - " + historyJson);
             this.mHistoryList.parseStringToList(historyJson);
 
         }catch(JSONException e){
@@ -585,7 +630,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
     public void populateFavouriteList(){
         try{
             String favouriteValue = this.mPreferences.getFavourite();
-            System.out.println("MainActivity - JSON string from Favourite - " + favouriteValue);
+            this.mLogging.debug(this.TAG_MAIN_ACTIVITY, "JSON string from Favourite - " + favouriteValue);
             this.mFavouriteList.parseStringToMap(favouriteValue);
         }catch(Exception e){
             //print error
@@ -597,7 +642,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         String settingValue = "";
         try{
             settingValue = this.mPreferences.getSetting();
-            System.out.println("MainActivity - JSON string from setting - " + settingValue);
+            this.mLogging.debug(this.TAG_MAIN_ACTIVITY, "JSON string from Setting - " + settingValue);
         }catch(Exception e){
             //print error
             e.printStackTrace();
@@ -636,13 +681,13 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
             String value = mHistoryList.parseListToString();
             mPreferences.setHistory(value);
         }catch(JSONException e){
-            //print error
+            this.mLogging.error(this.TAG_MAIN_ACTIVITY, e.getMessage());
             e.printStackTrace();
         }catch (FileNotFoundException e){
-            //print error
+            this.mLogging.error(this.TAG_MAIN_ACTIVITY, e.getMessage());
             e.printStackTrace();
         }catch (IOException e){
-            //print error
+            this.mLogging.error(this.TAG_MAIN_ACTIVITY, e.getMessage());
             e.printStackTrace();
         }
 
@@ -654,15 +699,15 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
             mPreferences.setFavourite(value);
             return true;
         }catch(JSONException e){
-            //print error
+            this.mLogging.error(this.TAG_MAIN_ACTIVITY, e.getMessage());
             e.printStackTrace();
             return false;
         }catch (FileNotFoundException e){
-            //print error
+            this.mLogging.error(this.TAG_MAIN_ACTIVITY, e.getMessage());
             e.printStackTrace();
             return false;
         }catch (IOException e){
-            //print error
+            this.mLogging.error(this.TAG_MAIN_ACTIVITY, e.getMessage());
             e.printStackTrace();
             return false;
         }
@@ -674,15 +719,15 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
             mPreferences.setSetting(value);
             return true;
         }catch(JSONException e){
-            //print error
+            this.mLogging.error(this.TAG_MAIN_ACTIVITY, e.getMessage());
             e.printStackTrace();
             return false;
         }catch (FileNotFoundException e){
-            //print error
+            this.mLogging.error(this.TAG_MAIN_ACTIVITY, e.getMessage());
             e.printStackTrace();
             return false;
         }catch (IOException e){
-            //print error
+            this.mLogging.error(this.TAG_MAIN_ACTIVITY, e.getMessage());
             e.printStackTrace();
             return false;
         }
@@ -730,15 +775,12 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         toolbarSearchText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                //System.out.println("onEditorAction is triggered!");
-                //System.out.println(v.getText());
                 closeKeyboard(toolbarSearchText);
                 initSearchAdapter();
 
                 displayFragmentSearch(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_ADDRESS, v.getText().toString(),
                         "", "", Parser.convertIntegerToString(getSettingRadius()));
 
-                //searchCarpark(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_ADDRESS, v.getText().toString(), "", "");
                 return true;
             }
         });
@@ -746,7 +788,6 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         toolbarSearchText.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                //System.out.println("position " + position + " is clicked");
                 closeKeyboard(toolbarSearchText);
                 initSearchAdapter();
 
@@ -758,15 +799,12 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
                 setToolbarSearchText(address);
                 displayFragmentSearch(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE, address,
                                     lat, lng, Parser.convertIntegerToString(getSettingRadius()));
-                //searchCarpark(Constant.SEARCH_HDB_NEARBY_CARPARK_USING_COORDINATE, address, lat, lng);
-
             }
         });
 
         toolbarSearchText.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                //System.out.println("setOnTouchListener - DropDown showing");
                 toolbarSearchText.showDropDown();
                 return false;
             }
@@ -872,7 +910,6 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
     }
 
     public void closeKeyboard(View v){
-        //imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
         imm.hideSoftInputFromWindow(this.toolbarSearchText.getWindowToken(), 0);
     }
 
@@ -924,8 +961,19 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
                 .actionListener(new ActionClickListener() {
                     @Override
                     public void onActionClicked(Snackbar snackbar) {
-                        fragmentSearch.run();
-                        mHasRadiusChanged = false;
+
+                        if(hasNetworkConnection()){
+                            if(getHasAlertDialogNoInternetShown()){
+                                hideAlertDialogNoNetworkConnection();
+                            }
+                            fragmentSearch.run();
+                            mHasRadiusChanged = false;
+                        }else{
+                            if(!getHasAlertDialogNoInternetShown()){
+                                showAlertDialogNoNetworkConnection();
+                            }
+                        }
+
                     }
                 });
 
@@ -969,7 +1017,6 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         return this.currentLocation;
     }
 
-
     /**
      * About dialog
      * **/
@@ -1000,9 +1047,99 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawerF
         txtTitle.setText(getString(R.string.about_title));
         txtVersion.setText(getString(R.string.about_version));
         txtDetail.setText(getString(R.string.about_detail));
+    }
 
+    private void initAlertDialogNoInternet(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = this.getLayoutInflater();
+        final View dialogView = inflater.inflate(R.layout.dialog_no_internet, null);
+
+        this.initDialogViews(dialogView);
+        builder.setView(dialogView);
+        this.mAlertDialogNoInternet = builder.create();
+    }
+
+    private void showAlertDialogNoNetworkConnection(){
+        this.mAlertDialogNoInternet.show();
+    }
+
+    private void hideAlertDialogNoNetworkConnection(){
+        this.mAlertDialogNoInternet.dismiss();
+        //this.setHasAlertDialogShown(false);
+    }
+
+    private void initDialogViews(View v){
+        TextView txtDetail = (TextView) v.findViewById(R.id.text_no_internet);
+        Button btnTapRetry = (Button) v.findViewById(R.id.btnTapRetry);
+
+        txtDetail.setText(Constant.ALERT_DIALOG_NETWORK_DiSABLED_MESSAGE);
+        btnTapRetry.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // try to check internet + show search
+                getFragmentSearchReady();
+            }
+        });
+    }
+
+    /*
+    public void setHasAlertDialogShown(boolean isShown){
+        this.hasAlertDialogShown = isShown;
+    }
+    */
+
+    public boolean getHasAlertDialogNoInternetShown(){
+        return this.mAlertDialogNoInternet.isShowing();
+        //return this.hasAlertDialogShown;
     }
 
 
+    private void openNetworkSetting(){
+        Intent locationSettingIntent = new Intent(Settings.ACTION_WIFI_SETTINGS);
+        startActivity(locationSettingIntent);
+    }
+
+
+
+    /*CHECK NETWORK CONNECTION*/
+    public boolean hasNetworkConnection(){
+        this.mInternetVar = getNetworkConnection();
+        if(mInternetVar.getHasData() || mInternetVar.getHasWifi()){
+            return true;
+        }
+        return false;
+    }
+
+    private InternetVariableClass getNetworkConnection(){
+        InternetVariableClass internetvar = new InternetVariableClass(false,false);
+
+        ConnectivityManager cm = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo[] netInfo = cm.getAllNetworkInfo();
+        for(NetworkInfo ni : netInfo){
+            if(ni.getTypeName().equalsIgnoreCase("WIFI") && ni.isConnected()){
+                internetvar.setHasWifi(true);
+            }//end if
+            if(ni.getTypeName().equalsIgnoreCase("MOBILE") && ni.isConnected()){
+                internetvar.setHasData(true);
+            }//end if
+        }//end for
+
+        return internetvar;
+    }//end hasNetworkConnection
+
+
+
+
+    public void initLogging(){
+        this.mLogging = CustomLogging.getInstance();
+    }
+
+    public void printLogDebug(String tag, String msg){
+        this.mLogging.debug(tag, msg);
+    }
+
+    public void printLogError(String tag, String msg){
+        this.mLogging.error(tag, msg);
+    }
 
 }

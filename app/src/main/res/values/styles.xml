@@ -126,6 +126,10 @@
         <item name="android:textColor">@color/white</item>
     </style>
 
+    <style name="AppCompat.Button.Flat.Grey" parent="AppCompat.Button.Flat">
+        <item name="android:textColor">@color/retry_grey</item>
+    </style>
+
 
     <style name="dialogTheme" parent="Theme.AppCompat.Light.Dialog">
         <item name="android:windowBackground">@color/white</item>
@@ -135,8 +139,8 @@
 
     <style name="dialogContentTheme">
         <item name="android:paddingTop">8dp</item>
-        <item name="android:paddingLeft">8dp</item>
-        <item name="android:paddingRight">8dp</item>
+        <item name="android:paddingLeft">16dp</item>
+        <item name="android:paddingRight">16dp</item>
         <item name="android:paddingBottom">8dp</item>
     </style>
 

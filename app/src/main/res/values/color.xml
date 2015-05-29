@@ -10,6 +10,7 @@
     <item name="toolbar_primary_text" type="color">#ffffff</item>
     <item name="white" type="color">#ffffff</item>
     <item name="black" type="color">#000000</item>
+    <item name="retry_grey" type="color">#757575</item>
     <item name="fragment_detail_background_color" type="color">#EEEEEE</item>
 
 
