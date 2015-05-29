@@ -42,5 +42,5 @@
     <!-- About Dialog-->
     <string name="about_title">Carpark@SG</string>
     <string name="about_detail">&#169; 2015 Joseph Cheng</string>
-    <string name="about_version">Version 0.0.1 Beta</string>
+    <string name="about_version">Version 0.0.2 Beta</string>
 </resources>
